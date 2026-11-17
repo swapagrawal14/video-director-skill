@@ -29,5 +29,5 @@ fl.append(f"{''.join(bus)}amix=inputs={len(bus)}:normalize=0,alimiter=limit=0.95
 pre = os.path.join(tempfile.gettempdir(), 'mix_pre.wav'); outp = os.path.join(tempfile.gettempdir(), 'mix_out.wav')
 cmd = ['ffmpeg', '-y', '-loglevel', 'error'] + sum([['-i', f] for f in ins], []) + ['-filter_complex', ';'.join(fl), '-map', '[out]', '-ar', '48000', '-ac', '2', '-t', str(D), pre]
 subprocess.run(cmd, check=True)
-subprocess.run([sys.executable, os.path.join(here, 'loudnorm.py'), pre, outp, str(lufs), '-1.0'], check=True, stdout=subprocess.DEVNULL)
-shutil.copy(outp, os.path.join(d, 'final_audio.wav')); print(f'final_audio.wav {D}s, {lufs} LUFS / -1 dBTP, 48 kHz')
+subprocess.run([sys.executable, os.path.join(here, 'loudnorm.py'), pre, outp, str(lufs), str(P.get('true_peak', -1.5))], check=True, stdout=subprocess.DEVNULL)
+shutil.copy(outp, os.path.join(d, 'final_audio.wav')); print(f'final_audio.wav {D}s, {lufs} LUFS / {P.get("true_peak", -1.5)} dBTP, 48 kHz')

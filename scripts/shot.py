@@ -11,9 +11,11 @@ with sync_playwright() as p:
     br.close(); srv.shutdown()
 try:
     from PIL import Image, ImageDraw
-    cols = 2; ims = [Image.open(f).resize((640, 360)) for f in files]; rows = (len(ims) + 1) // cols
-    sheet = Image.new('RGB', (640 * cols, 360 * rows), 'black')
+    im0 = Image.open(files[0]); vertical = im0.height > im0.width
+    tw, th = (300, 533) if vertical else (640, 360); cols = 5 if vertical else 2   # keeps aspect for 9:16 projects
+    ims = [Image.open(f).resize((tw, th)) for f in files]; rows = (len(ims) + cols - 1) // cols
+    sheet = Image.new('RGB', (tw * cols, th * rows), 'black')
     for k, (im, t) in enumerate(zip(ims, times)):
-        sheet.paste(im, ((k % cols) * 640, (k // cols) * 360)); ImageDraw.Draw(sheet).text(((k % cols) * 640 + 8, (k // cols) * 360 + 8), f't={t}', fill='yellow')
+        sheet.paste(im, ((k % cols) * tw, (k // cols) * th)); ImageDraw.Draw(sheet).text(((k % cols) * tw + 8, (k // cols) * th + 8), f't={t}', fill='yellow')
     sheet.save(os.path.join(d, 'shots', 'sheet.jpg'), quality=85); print('sheet ->', os.path.join(d, 'shots', 'sheet.jpg'))
 except Exception as e: print('sheet skipped', e)

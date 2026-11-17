@@ -16,8 +16,11 @@ if A.grain: v.append(f"noise=c0s={A.grain}:c0f=t+u")
 if A.bars:
     v.append(f"drawbox=x=0:y=0:w=iw:h=(ih-iw/{A.bars})/2:color=black:t=fill,drawbox=x=0:y=ih-(ih-iw/{A.bars})/2:w=iw:h=(ih-iw/{A.bars})/2:color=black:t=fill")
 vf = 'scale=out_range=tv,' + ','.join(v) + ',format=yuv420p'
+import shutil, tempfile
+TMP = os.path.join(tempfile.gettempdir(), 'grade_' + os.path.basename(A.dst))
 fps = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=r_frame_rate', '-of', 'csv=p=0', A.src], capture_output=True, text=True).stdout.strip().strip(',')
 g = max(1, round(eval(fps) / 2)) if fps else 12
 subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', A.src, '-filter_complex', vf, '-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-g', str(g),
-                '-pix_fmt', 'yuv420p', '-color_range', 'tv', '-c:a', 'copy', '-movflags', '+faststart', A.dst], check=True)
+                '-pix_fmt', 'yuv420p', '-color_range', 'tv', '-c:a', 'copy', '-movflags', '+faststart', TMP], check=True)
+shutil.move(TMP, A.dst)  # write in /tmp first: faststart fails on some network filesystems
 print('graded ->', A.dst)

@@ -9,7 +9,7 @@ ap.add_argument('words'); ap.add_argument('out')
 ap.add_argument('--w', type=int, default=1920); ap.add_argument('--h', type=int, default=1080)
 ap.add_argument('--style', default='pop'); ap.add_argument('--font', default='Baloo 2')
 ap.add_argument('--max-words', type=int, default=3); ap.add_argument('--max-gap', type=float, default=0.6)
-ap.add_argument('--upper', action='store_true')
+ap.add_argument('--upper', action='store_true'); ap.add_argument('--active', default='FFE500', help='active-word colour RRGGBB (horror: FFFFFF or B01010)'); ap.add_argument('--idle', default='FFFFFF', help='other words colour RRGGBB')
 a = ap.parse_args()
 W = json.load(open(a.words))
 vertical = a.h > a.w
@@ -20,7 +20,8 @@ def ts(t):
     t = max(0, t); h = int(t // 3600); m = int(t % 3600 // 60); s = t % 60
     return f'{h}:{m:02d}:{s:05.2f}'
 # ASS colours are &HAABBGGRR
-WHITE, YELLOW, BLACK, SHADOW = '&H00FFFFFF', '&H0000E5FF', '&H00000000', '&H80000000'
+bgr = lambda h: '&H00' + h[4:6] + h[2:4] + h[0:2]
+WHITE, YELLOW, BLACK, SHADOW = bgr(a.idle.upper()), bgr(a.active.upper()), '&H00000000', '&H80000000'
 hdr = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {a.w}
