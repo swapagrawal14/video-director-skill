@@ -10,7 +10,7 @@ Everything is code: a deterministic three.js scene rendered frame by frame to MP
 Read **[SKILL.md](SKILL.md)** first and follow it end to end. Then `docs/STYLES.md` (genre recipes), `docs/ENGINE.md` (engine + project.json), and study `examples/braces-tutorial/`.
 
 Prompt you can paste into any agent:
-> Use the skill at https://github.com/swapagrawal14/video-director-skill (read SKILL.md and follow it exactly). Make a ~3 minute video on **<topic>** for **<audience>** in **<language>**, style **<recipe or "you decide">**. Credit: **<name (role)>**. Deliver the MP4, thumbnail, title, description and tags.
+> Use the skill at https://github.com/swapagrawal14/video-director-skill (read SKILL.md and follow it exactly). Make a ~3 minute video on **[topic]** for **[audience]** in **[language]**, style **[recipe or "you decide"]**. Credit: **[name (role)]**. Deliver the MP4, thumbnail, title, description and tags.
 
 ## Quick start (humans)
 ```bash
