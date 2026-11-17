@@ -10,3 +10,20 @@
 - **Subtitles out of sync** — you changed VO after `build_timing.py`. Re-run timing, then mix.
 - **TTS reads numbers weirdly** — spell numbers as words in `vo`, keep digits in `sub`.
 - **Labels jump between frames** — the anchor is computed from something not deterministic in t. Everything must derive from t.
+
+## edge-tts: `A ":" is not allowed in login` or websocket errors
+A corporate/sandbox HTTP proxy is breaking the connection. `tts_free.py` removes proxy env vars for Edge by default;
+set `EDGE_TTS_KEEP_PROXY=1` if you actually need the proxy.
+
+## faster-whisper crashes decoding audio (PyAV 19)
+`words_whisper.py` decodes with the ffmpeg CLI into numpy, so PyAV isn't used. Keep it that way.
+
+## Whisper prints Hindi in Urdu script / mishears names
+Never show Whisper's text. Use native TTS timings (Edge), or let words_project.py map script words onto Whisper's times.
+Pass names in the initial prompt (words_whisper.py 5th arg).
+
+## Page never becomes READY (render times out after 90 s)
+`node_modules/three` is missing (run `scripts/setup.sh`) or a project symlink is broken. Check `node_modules/three/build`.
+
+## Custom scene renders differently every time
+It reads the clock or Math.random. Set `"timeshim": true` (see docs/CRAFT.md §1).

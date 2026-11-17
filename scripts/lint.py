@@ -1,0 +1,46 @@
+"""Pre-render lint of project.json + timing.json: catches the craft mistakes that make AI videos look cheap.
+Usage: python3 scripts/lint.py <project-dir> [--json]   (exit 1 on any ERROR)
+Checks: hook (first VO/text within 1 s, first scene <=10 s), scene length (3-25 s), VO speed (130-190 wpm English-ish),
+subtitle chunk length (<=90 chars), dead air (scene with no VO and no 'secs'/'shot'), outro credit present,
+>=3 chapters >=10 s for videos over 60 s, numbers written as digits inside 'vo' (TTS mispronounces), missing VO files,
+genre-specific bans from docs/STYLES.md (e.g. horror without silence-before-stinger, promo without CTA)."""
+import json, os, re, sys
+d = sys.argv[1]; asjson = '--json' in sys.argv
+P = json.load(open(os.path.join(d, 'project.json'))); tp = os.path.join(d, 'timing.json')
+T = json.load(open(tp)) if os.path.exists(tp) else None
+E, W = [], []
+S = P['scenes']; genre = (P.get('recipe') or P.get('genre') or '').lower()
+if T:
+    s0 = T['scenes'][0]
+    if s0['off'] > 1.0: W.append(f"hook: first VO starts at {s0['off']} s; set intro_lead <= 0.3 so the hook lands in the first second")
+    if s0['d'] > 10: W.append(f"hook: first scene is {s0['d']} s; a hook should land and turn within 10 s")
+for i, s in enumerate(S):
+    ts = T['scenes'][i] if T else None; vo = s.get('vo', '') or ''
+    if ts:
+        if ts['d'] > 25: W.append(f's{i:02d}: {ts["d"]} s long; split it (one idea per scene, 8-14 s sweet spot)')
+        if ts['d'] < 2.5 and s.get('type') not in ('title', 'end'): W.append(f's{i:02d}: only {ts["d"]} s; viewers cannot read it')
+        if vo and ts['vo']:
+            wpm = len(vo.split()) / ts['vo'] * 60
+            if wpm > 200: W.append(f's{i:02d}: VO {wpm:.0f} wpm, too fast; slow the TTS or cut words')
+            if wpm < 75 and len(vo.split()) > 6: W.append(f's{i:02d}: VO {wpm:.0f} wpm, sluggish; check for long pauses')
+        if vo and not ts['vo']: E.append(f's{i:02d}: has vo text but vo/s{i:02d}.wav missing or empty (run TTS, then build_timing.py)')
+    if re.search(r'\d', vo): W.append(f's{i:02d}: digits in vo ("{re.findall(r"[^ ]*\d[^ ]*", vo)[0]}"); write numbers as words for TTS, digits go in sub')
+    for c in (s.get('sub') or '').split('|'):
+        if len(c.strip()) > 90: E.append(f's{i:02d}: subtitle chunk {len(c.strip())} chars (>90): "{c.strip()[:40]}..."')
+    if not vo and not s.get('secs') and s.get('type') not in ('title', 'end'): W.append(f's{i:02d}: no vo and no secs; dead air (default 4 s)')
+if P.get('burn_captions') and any(x.get('sub') for x in S):
+    E.append('burn_captions is set but scenes also have "sub": the two caption layers overlap. Clear "sub" (keep text in "cap"/"vo") or drop burn_captions')
+last = json.dumps(S[-1]).lower()
+if not any(k in last for k in ('credit', 'by ', 'subscribe', 'follow', 'end')): W.append('outro: last scene has no credit / CTA')
+if T and T['duration'] > 60 and sum(1 for s in S if s.get('chapter')) < 3: W.append('chapters: add "chapter" titles to >=3 scenes (>=10 s apart) for YouTube chapters')
+if 'horror' in genre:
+    if not P.get('mute') : W.append('horror: no "mute" window; put 0.5-1 s of silence right before each stinger (scares need a vacuum)')
+    if not any('sting' in x.get('file', '') for x in P.get('sfx', [])): W.append('horror: no stinger in sfx; run scripts/sfx_horror.sh')
+if any(k in genre for k in ('promo', 'product')) and not any(k in last for k in ('link', 'download', 'try', 'buy', 'visit', 'cta')):
+    W.append('promo: last scene needs a clear call to action')
+if asjson: print(json.dumps({'errors': E, 'warnings': W}, indent=1))
+else:
+    for x in E: print('ERROR', x)
+    for x in W: print('WARN ', x)
+    print('LINT', 'FAILED' if E else 'PASSED', f'({len(E)} errors, {len(W)} warnings)')
+sys.exit(1 if E else 0)

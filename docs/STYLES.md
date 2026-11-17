@@ -25,13 +25,14 @@ Pick one. Each recipe sets `theme`, camera language, pacing, overlays, music and
 - **Camera**: slow creeping dollies, low angles, long holds, a sudden whip/cut for the scare. Dutch tilt (camera.rotation.z) in tense beats.
 - **Story**: cold open (strange detail) → normal world → wrongness escalates in 3 beats → reveal → unresolved sting. Never cartoon monsters; imply with silhouettes, doors, shadows, things that moved between shots.
 - **Type**: no cute fonts; thin serif or condensed caps, white at 80% opacity, slow fades. No mascot, no progress bar, no step chips.
-- **Audio**: `music.py horror` + `sfx` stingers (low boom, reversed swell, creak). Leave real silence before the scare.
+- **Audio**: `music.py horror` + `bash scripts/sfx_horror.sh <dir>/sfx` (sub drone, dark room tone, riser, stinger, heartbeat). Build → 0.5–1 s `mute` vacuum → stinger on the visual frame (docs/CRAFT.md §6).
+- **Finish**: `grade.py --look horror --grain 14 --vignette 0.6 --ca 2` (optional `--bars 2.39`). Captions: `--style pop`, thin white, no yellow.
 
 ## 4. Product Hero (launch, promo, app demo)
 - **Look**: studio cyclorama (light grey gradient), glossy hero product on a turntable, big soft area lights, reflections on floor (clearcoat floor plane).
 - **Camera**: 360° turntable, macro push-ins on features, a final hero angle with logo.
 - **Overlays**: bold feature callouts (one word + one line), price/CTA end card.
-- **Pacing**: fast. 3–6 s shots, 30–90 s total. Cut on music beats (upbeat bpm 118 → 0.508 s per beat).
+- **Pacing**: fast. 3–6 s shots, 30–90 s total. Cut on music beats: `beats.py` + `"beat_snap": true`. Grade `teal_orange --vignette 0.3`. Export youtube + shorts + square.
 - **Music**: `upbeat` or `epic`.
 
 ## 5. Storybook (kids, fables, narrative)
@@ -59,3 +60,15 @@ Pick one. Each recipe sets `theme`, camera language, pacing, overlays, music and
 - Consistent palette and type across the whole video.
 - Subtitles always readable (dark pill, ≤ 2 lines).
 - End card: title ✓, one-line takeaway, credit.
+
+
+## Finishing defaults per recipe
+| Recipe | Grade | Captions | Exports |
+|---|---|---|---|
+| Pixar Clinic | `warm --mix 0.5` or none | engine `sub` (or `pop` for Shorts) | youtube + shorts cut of the best step |
+| Blueprint Tech | `teal_orange --mix 0.5` | `karaoke` | youtube |
+| Cinematic Horror | `horror --grain 14 --vignette 0.6 --ca 2` | `pop`, white only | youtube + shorts |
+| Product Hero | `teal_orange --vignette 0.3` | `pop --upper` | youtube + shorts + square |
+| Storybook | `warm --grain 6` | `karaoke` | youtube |
+| Kinetic Type | none | the type IS the caption | shorts + portrait |
+| Data Story | `bleach --mix 0.4` | `karaoke` | youtube + square |
