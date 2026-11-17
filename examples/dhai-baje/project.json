@@ -1,0 +1,155 @@
+{
+ "title": "ढाई बजे | 2:30 AM",
+ "recipe": "horror",
+ "credit": "Swapnil Agrawal (BDS intern)",
+ "fps": 24,
+ "width": 720,
+ "aspect": [
+  9,
+  16
+ ],
+ "intro_lead": 0.6,
+ "outro_tail": 3.0,
+ "music_mood": "horror",
+ "music_gain": 0.5,
+ "lufs": -14,
+ "scenes": [
+  {
+   "chapter": "Rule",
+   "vo": "पुराने hostel के इस wing में... एक rule है।",
+   "hold": 0.8
+  },
+  {
+   "vo": "रात ढाई बजे के बाद... corridor की light की तरफ़ कभी मत देखना।",
+   "hold": 1.0
+  },
+  {
+   "vo": "उस रात... मैं भूल गया।",
+   "hold": 2.2
+  },
+  {
+   "chapter": "Flicker",
+   "vo": "हर बार जब bulb झपकता है... वो थोड़ा और पास आ जाता है।",
+   "hold": 4.0
+  },
+  {
+   "vo": "मैंने दरवाज़ा खोलने की कोशिश की... वो बाहर से बंद था।",
+   "hold": 1.6
+  },
+  {
+   "vo": "अब light बंद है।",
+   "hold": 6.5
+  },
+  {
+   "chapter": "End",
+   "type": "end",
+   "vo": "अगर आज रात तुम्हारी light झपके... पीछे मत मुड़ना।",
+   "hold": 1.0,
+   "cta": "follow for part 2"
+  }
+ ],
+ "sfx": [
+  {
+   "file": "sfx/room_tone_dark.wav",
+   "at": 0,
+   "gain": 0.5
+  },
+  {
+   "file": "sfx/room_tone_dark.wav",
+   "at": 20,
+   "gain": 0.5
+  },
+  {
+   "file": "sfx/room_tone_dark.wav",
+   "at": 40,
+   "gain": 0.4
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 0.25,
+   "gain": 0.5
+  },
+  {
+   "file": "sfx/thump.wav",
+   "at": 1.45,
+   "gain": 0.45
+  },
+  {
+   "file": "sfx/drone_sub.wav",
+   "at": 22.232,
+   "gain": 0.6
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 18.376,
+   "gain": 0.7
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 23.632,
+   "gain": 0.7
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 25.832,
+   "gain": 0.7
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 28.132,
+   "gain": 0.7
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 30.332,
+   "gain": 0.7
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 32.532,
+   "gain": 0.7
+  },
+  {
+   "file": "sfx/rattle.wav",
+   "at": 35.296,
+   "gain": 0.55
+  },
+  {
+   "file": "sfx/thump.wav",
+   "at": 39.796,
+   "gain": 0.7
+  },
+  {
+   "file": "sfx/buzz.wav",
+   "at": 43.914,
+   "gain": 0.6
+  },
+  {
+   "file": "sfx/heartbeat.wav",
+   "at": 47.264,
+   "gain": 0.8
+  },
+  {
+   "file": "sfx/riser_4s.wav",
+   "at": 46.364,
+   "gain": 0.35
+  },
+  {
+   "file": "sfx/stinger.wav",
+   "at": 51.264,
+   "gain": 1.0
+  },
+  {
+   "file": "sfx/drone_sub.wav",
+   "at": 51.564,
+   "gain": 0.5
+  }
+ ],
+ "mute": [
+  {
+   "from": 50.414,
+   "to": 51.264
+  }
+ ],
+ "burn_captions": "captions.ass"
+}
