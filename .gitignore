@@ -1,0 +1,9 @@
+node_modules/
+projects/
+chunks/
+*.mp4
+*.wav
+shots/
+clean_*.png
+__pycache__/
+.env

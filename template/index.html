@@ -1,0 +1,231 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!--
+  3D Tutorial Video — starter scene engine.
+  Deterministic: window.renderAt(t) draws exactly one frame for time t (seconds).
+  Data comes from project.json (content) + timing.json (built by scripts/build_timing.py).
+  Replace buildSubject() and SCENE_FX with your topic's 3D models and animations.
+-->
+<style>
+@font-face{font-family:Baloo;src:url(fonts/baloo2.ttf);font-weight:400 800}
+html,body{margin:0;background:#000;overflow:hidden}
+canvas{display:block}
+#gl{position:absolute;left:0;top:0}
+</style></head>
+<body>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from './node_modules/three/examples/jsm/environments/RoomEnvironment.js';
+await Promise.all(['500','600','700','800'].map(w => document.fonts.load(w + ' 40px Baloo')));
+
+const P = await (await fetch('project.json')).json();
+const TM = await (await fetch('timing.json')).json();
+const W = P.width || 1280, H = Math.round(W * 9 / 16), K = W / 1280; // K scales all 2D sizes
+const SC = TM.scenes;            // [{t, d, off, vo}]
+const DURATION = TM.duration;
+window.DURATION = DURATION;
+const TH = P.theme || {};
+const ACC = TH.accent || '#e2475b', ACC2 = TH.accent2 || '#3b82c4', INK = '#23324a', GOLD = TH.highlight || '#ffd23f';
+
+/* ---------- utils ---------- */
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647, (seed - 1) / 2147483646);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
+const back = x => { x = clamp(x); const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+
+/* ---------- renderer ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.domElement.id = 'gl';
+const out = document.createElement('canvas'); out.width = W; out.height = H; document.body.appendChild(out);
+const g2 = out.getContext('2d');
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+{ // soft bokeh gradient backdrop
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 576; const g = c.getContext('2d');
+  const bg = TH.background || ['#24557a', '#5fa6b8', '#f2cfa8'];
+  const gr = g.createLinearGradient(0, 0, 0, 576); gr.addColorStop(0, bg[0]); gr.addColorStop(.55, bg[1]); gr.addColorStop(1, bg[2]);
+  g.fillStyle = gr; g.fillRect(0, 0, 1024, 576);
+  for (let i = 0; i < 44; i++) { const x = rnd() * 1024, y = rnd() * 400, r = 15 + rnd() * 60; const rg = g.createRadialGradient(x, y, 0, x, y, r); const col = rnd() > .5 ? '255,236,200' : '200,240,255'; rg.addColorStop(0, `rgba(${col},${.10 + rnd() * .14})`); rg.addColorStop(1, `rgba(${col},0)`); g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; scene.background = t;
+}
+const camera = new THREE.PerspectiveCamera(32, W / H, 1, 3000);
+scene.add(new THREE.HemisphereLight('#fff1dc', '#5a7a88', .6));
+const key = new THREE.DirectionalLight('#fff0d8', 2.5); key.position.set(-90, 160, 160); key.castShadow = true;
+key.shadow.mapSize.set(1536, 1536); Object.assign(key.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 20, far: 600 }); key.shadow.bias = -.0004; key.shadow.normalBias = .3; key.shadow.radius = 6;
+scene.add(key);
+const rim = new THREE.DirectionalLight('#bfe6ff', 1.3); rim.position.set(120, 80, -160); scene.add(rim);
+const fillL = new THREE.PointLight('#ffd2b0', 1300, 600, 1.6); fillL.position.set(110, 90, 170); scene.add(fillL);
+
+// Pixar-ish material: soft clearcoat plastic
+const M = (color, o = {}) => new THREE.MeshPhysicalMaterial({ color, roughness: .55, metalness: 0, clearcoat: .3, clearcoatRoughness: .4, ...o });
+const STEEL = new THREE.MeshPhysicalMaterial({ color: '#f4f7fa', metalness: .7, roughness: .26, clearcoat: .6, envMapIntensity: 1.8 });
+const shadowAll = o => o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+
+/* ---------- stage: wooden bench + mat ---------- */
+const bench = new THREE.Mesh(new THREE.BoxGeometry(900, 20, 600), M('#ffffff', { roughness: .45, clearcoat: .6 }));
+bench.position.set(0, -36, 40); bench.receiveShadow = true; scene.add(bench);
+{
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const g = c.getContext('2d');
+  g.fillStyle = TH.bench || '#c98e5a'; g.fillRect(0, 0, 1024, 1024);
+  for (let i = 0; i < 160; i++) { g.strokeStyle = `rgba(${rnd() > .5 ? '120,70,35' : '230,180,130'},${.08 + rnd() * .12})`; g.lineWidth = 1 + rnd() * 5; g.beginPath(); const y = rnd() * 1024; g.moveTo(0, y); for (let x = 0; x <= 1024; x += 64) g.lineTo(x, y + Math.sin(x * .01 + i) * 8 + rnd() * 3); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 2); bench.material.map = t;
+}
+const mat = new THREE.Mesh(new THREE.CylinderGeometry(80, 80, 1.2, 64), M(TH.mat || '#3e8e93', { roughness: .8, clearcoat: 0 })); mat.position.set(0, -25.6, 0); mat.receiveShadow = true; scene.add(mat);
+
+/* ======================================================================
+   SUBJECT — REPLACE THIS with the topic's hero model (typodont, heart, engine...).
+   Build from primitives / Lathe / Extrude / Catmull-Rom tubes. Keep it on the mat
+   (centre 0,0,0; top of mat is y = -25). Return named parts so scenes can animate them.
+   ====================================================================== */
+function buildSubject() {
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(22, 26, 8, 48), M('#dfe6ee', { roughness: .35, clearcoat: .7 })); base.position.y = -21; g.add(base);
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(16, 4), M(ACC, { roughness: .3, clearcoat: .9 })); core.position.y = 4; g.add(core);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(24, 1.6, 16, 80), STEEL); ring.position.y = 4; ring.rotation.x = Math.PI / 2.3; g.add(ring);
+  const parts = { base, core, ring, pins: [] };
+  for (let k = 0; k < 6; k++) { const p = new THREE.Mesh(new THREE.SphereGeometry(2.4, 20, 14), M(k % 2 ? ACC2 : GOLD)); g.add(p); parts.pins.push(p); }
+  shadowAll(g); scene.add(g); g.userData = parts; return g;
+}
+const subject = buildSubject();
+
+/* ---------- mascot (tooth "Dentu" by default; swap shape for your topic) ---------- */
+const mascot = (() => {
+  const g = new THREE.Group(); const body = new THREE.Group(); g.add(body);
+  const white = M(TH.mascot || '#fbf8f2', { roughness: .32, clearcoat: .8, clearcoatRoughness: .15, sheen: .5, sheenColor: '#ffffff' });
+  const prof = []; for (let i = 0; i <= 30; i++) { const t = i / 30; const r = 15 * Math.sin(Math.PI * clamp(.15 + t * .85)) ** .5 * (1 - .12 * Math.cos(t * 6)); prof.push(new THREE.Vector2(Math.max(.01, r), t * 30)); }
+  prof.push(new THREE.Vector2(.01, 30.5));
+  const crown = new THREE.Mesh(new THREE.LatheGeometry(prof, 48), white); crown.position.y = 10; body.add(crown);
+  [[-6, -5], [6, -5], [-6, 5], [6, 5]].forEach(c => { const s = new THREE.Mesh(new THREE.SphereGeometry(5.2, 24, 16), white); s.position.set(c[0] * .85, 37.2, c[1] * .85); s.scale.y = .55; body.add(s); });
+  [-1, 1].forEach(s => { const l = new THREE.Mesh(new THREE.CapsuleGeometry(4.6, 9, 8, 16), white); l.position.set(s * 6.5, 6, 0); l.rotation.z = s * .12; body.add(l); });
+  const eyes = []; [-1, 1].forEach(s => { const e = new THREE.Group();
+    e.add(new THREE.Mesh(new THREE.SphereGeometry(4.8, 32, 24), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: .1, clearcoat: 1 })));
+    const ir = new THREE.Mesh(new THREE.SphereGeometry(2.9, 28, 20), new THREE.MeshPhysicalMaterial({ color: '#3a7bd5', roughness: .1, clearcoat: 1 })); ir.position.z = 3.9; ir.scale.z = .45; e.add(ir);
+    const pu = new THREE.Mesh(new THREE.SphereGeometry(1.7, 20, 14), new THREE.MeshBasicMaterial({ color: '#0d0d14' })); pu.position.z = 4.85; pu.scale.z = .35; e.add(pu);
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(.7, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' })); hl.position.set(-.9, 1.1, 5.4); e.add(hl);
+    const lid = new THREE.Mesh(new THREE.SphereGeometry(5.1, 28, 16, 0, Math.PI * 2, 0, Math.PI / 2), white); e.add(lid); e.userData.lid = lid;
+    e.position.set(s * 6.2, 28, 11.5); body.add(e); eyes.push(e); });
+  [-1, 1].forEach(s => { const c = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), new THREE.MeshStandardMaterial({ color: '#ff9aa8', transparent: true, opacity: .7, roughness: 1 })); c.scale.set(1, .6, .3); c.position.set(s * 10.5, 22, 12.4); body.add(c); });
+  const sm = new THREE.Mesh(new THREE.TorusGeometry(4, .75, 10, 30, Math.PI), M('#5a2630')); sm.rotation.z = Math.PI; sm.position.set(0, 21.5, 14); body.add(sm);
+  const arms = []; [-1, 1].forEach(s => { const a = new THREE.Group(); const m = new THREE.Mesh(new THREE.CapsuleGeometry(2.2, 9, 6, 12), white); m.position.y = -6; a.add(m); const h = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 12), white); h.position.y = -12; a.add(h); a.position.set(s * 14.5, 24, 0); a.rotation.z = s * .5; body.add(a); arms.push(a); });
+  shadowAll(g); g.userData = { body, eyes, arms }; g.visible = false; scene.add(g); return g;
+})();
+function animMascot(t, mode) {
+  const u = mascot.userData, b = u.body;
+  const hop = Math.abs(Math.sin(t * 4.2)) * (mode === 'hop' ? 1 : .25);
+  b.position.y = hop * 4; const sq = 1 + (mode === 'hop' ? .06 : .02) * Math.cos(t * 8.4);
+  b.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq)); b.rotation.z = Math.sin(t * 2.1) * .06;
+  u.arms[1].rotation.z = mode === 'wave' ? -2.4 + Math.sin(t * 9) * .4 : (mode === 'point' ? -1.7 : .5 + Math.sin(t * 3) * .1);
+  u.arms[0].rotation.z = -.5 - Math.sin(t * 3) * .1;
+  const bl = ((t * .9) % 3.1) < .14; u.eyes.forEach(e => { e.userData.lid.rotation.x = bl ? -.2 : -1.9; });
+}
+
+/* ---------- camera: each scene eases between two orbit keys [tx,ty,tz,dist,az,el] ---------- */
+const DEF_SHOT = { from: [0, 0, 0, 160, .35, .2], to: [0, 0, 0, 140, -.2, .15] };
+function camAt(i, u) { const s = P.scenes[i].shot || DEF_SHOT; const a = s.from, b = s.to, k = ease(u); return a.map((v, j) => lerp(v, b[j], k)); }
+function applyCam(c) { const [tx, ty, tz, dist, az, el] = c; camera.position.set(tx + dist * Math.cos(el) * Math.sin(az), ty + dist * Math.sin(el), tz + dist * Math.cos(el) * Math.cos(az)); camera.lookAt(tx, ty, tz); }
+const projectP = v => { const p = v.clone().project(camera); return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H, p.z]; };
+
+/* ======================================================================
+   SCENE_FX[i](u, S, t) — per-scene 3D animation. u = seconds into scene, S = timing.
+   Add one function per scene. Everything must depend only on t (deterministic).
+   ====================================================================== */
+const SP = subject.userData;
+const resetSubject = () => { SP.core.rotation.set(0, 0, 0); SP.core.scale.setScalar(1); SP.ring.rotation.y = 0; SP.pins.forEach(p => p.visible = false); };
+const SCENE_FX = {
+  1: (u) => { SP.pins.forEach((p, k) => { const a = k / 6 * Math.PI * 2 + u * .4; const kk = back(clamp((u - 1 - k * .4) / .6)); p.visible = kk > 0; p.position.set(Math.cos(a) * 24, 4 + Math.sin(a * 2) * 3, Math.sin(a) * 24); p.scale.setScalar(Math.max(.001, kk)); }); },
+  2: (u) => { SP.core.rotation.y = u * .8; SP.ring.rotation.y = u * 1.4; },
+};
+
+/* ---------- 2D overlay kit ---------- */
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function card(x, y, w, h, alpha, fillCol = 'rgba(255,253,248,0.96)', r = 18) { g2.save(); g2.globalAlpha *= alpha; g2.shadowColor = 'rgba(20,30,50,.28)'; g2.shadowBlur = 24 * K; g2.shadowOffsetY = 8 * K; g2.fillStyle = fillCol; rr(g2, x, y, w, h, r); g2.fill(); g2.restore(); }
+const F = (wt, px) => `${wt} ${Math.round(px * K)}px Baloo`;
+function label3D(v, text, a, dx = 60, dy = -50, col = ACC) {
+  if (a <= 0 || !v) return; const [x, y, z] = projectP(v); if (z > 1) return; dx *= K; dy *= K;
+  g2.save(); g2.globalAlpha = clamp(a); g2.font = F(700, 21); const tw = g2.measureText(text).width + 30 * K; const lx = x + dx, ly = y + dy;
+  g2.strokeStyle = '#fff'; g2.lineWidth = 3 * K; g2.shadowColor = 'rgba(0,0,0,.35)'; g2.shadowBlur = 6; g2.beginPath(); g2.moveTo(x, y); g2.lineTo(lx, ly); g2.stroke();
+  g2.fillStyle = col; g2.beginPath(); g2.arc(x, y, 5.5 * K, 0, 7); g2.fill(); g2.strokeStyle = '#fff'; g2.lineWidth = 2.5 * K; g2.stroke();
+  const bx = dx >= 0 ? lx : lx - tw; card(bx, ly - 19 * K, tw, 38 * K, 1, '#fff', 19 * K);
+  g2.globalAlpha = clamp(a); g2.fillStyle = INK; g2.textBaseline = 'middle'; g2.fillText(text, bx + 15 * K, ly + K); g2.restore();
+}
+function wrapLines(text, maxW, font) { g2.font = font; const words = text.split(' '); const lines = []; let cur = ''; words.forEach(w => { const t = cur ? cur + ' ' + w : w; if (g2.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }); if (cur) lines.push(cur); return lines; }
+function badge(text, sub, prog, col, a) { if (a <= 0) return; g2.save(); g2.globalAlpha = a; const x = W - 250 * K, y = 34 * K; card(x, y, 210 * K, 86 * K, 1, 'rgba(255,253,248,.97)', 24 * K);
+  g2.lineWidth = 7 * K; g2.strokeStyle = 'rgba(0,0,0,.08)'; g2.beginPath(); g2.arc(x + 44 * K, y + 43 * K, 25 * K, 0, 7); g2.stroke(); g2.strokeStyle = col; g2.lineCap = 'round'; g2.beginPath(); g2.arc(x + 44 * K, y + 43 * K, 25 * K, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(prog)); g2.stroke();
+  g2.fillStyle = INK; g2.font = F(800, 28); g2.textBaseline = 'middle'; g2.fillText(text, x + 82 * K, y + 34 * K); g2.fillStyle = '#6b7280'; g2.font = F(600, 16); g2.fillText(sub, x + 82 * K, y + 62 * K); g2.restore(); }
+function listCards(title, items, starts, u, cols) {
+  g2.save(); g2.globalAlpha = clamp(u / .5); g2.fillStyle = '#fff'; g2.font = F(800, 40); g2.shadowColor = 'rgba(0,0,0,.35)'; g2.shadowBlur = 10; g2.fillText(title, W - 620 * K, 128 * K); g2.restore();
+  const hgt = (items.length > 3 ? 82 : 92) * K, gap = (items.length > 3 ? 94 : 106) * K;
+  items.forEach((r, k) => { const kk = back(clamp((u - starts[k]) / .6)); if (kk <= 0) return; const x = W - 620 * K + (1 - kk) * 120 * K, y = 158 * K + k * gap; g2.save(); g2.globalAlpha = clamp(kk); card(x, y, 570 * K, hgt, 1, 'rgba(255,253,248,.97)', 22 * K);
+    g2.fillStyle = cols[k % cols.length]; g2.beginPath(); g2.arc(x + 44 * K, y + hgt / 2, 25 * K, 0, 7); g2.fill(); g2.fillStyle = '#fff'; g2.font = F(800, 27); g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(String(k + 1), x + 44 * K, y + hgt / 2 + 2 * K);
+    g2.textAlign = 'left'; g2.fillStyle = INK; g2.font = F(700, 25); g2.fillText(r, x + 86 * K, y + hgt / 2 + 2 * K); g2.restore(); });
+}
+function titleCard(u, S, kicker, title, sub, credit) {
+  const a = clamp((u - .3) / .6) * (1 - clamp((u - (S.d - .8)) / .6)); const k = back(clamp((u - .3) / .9)); if (a <= 0) return;
+  g2.save(); g2.globalAlpha = a; g2.font = F(800, 58); const cw = Math.max(580 * K, g2.measureText(title).width + 80 * K), ch = 236 * K, cx = W - cw - 60 * K, cy = 110 * K + (1 - k) * 60 * K; card(cx, cy, cw, ch, 1, 'rgba(255,253,248,.97)', 28 * K);
+  g2.fillStyle = ACC; g2.font = F(700, 18); g2.fillText(kicker, cx + 36 * K, cy + 50 * K);
+  g2.fillStyle = INK; g2.font = F(800, 58); g2.fillText(title, cx + 34 * K, cy + 114 * K);
+  g2.fillStyle = ACC2; g2.font = F(700, 29); g2.fillText(sub, cx + 36 * K, cy + 158 * K);
+  g2.fillStyle = '#6b7280'; g2.font = F(600, 19); g2.fillText(credit, cx + 36 * K, cy + 202 * K); g2.restore();
+}
+function endCard(u, title, line, credit) {
+  const a = clamp((u - 1) / .6); const k = back(clamp((u - 1) / .8)); g2.save(); g2.globalAlpha = a; const cw = 560 * K, ch = 196 * K, cx = W - cw - 70 * K, cy = 150 * K + (1 - k) * 40 * K; card(cx, cy, cw, ch, 1, 'rgba(255,253,248,.97)', 26 * K);
+  g2.fillStyle = INK; g2.font = F(800, 42); g2.fillText(title, cx + 34 * K, cy + 72 * K); g2.fillStyle = ACC2; g2.font = F(700, 22); g2.fillText(line, cx + 34 * K, cy + 116 * K);
+  g2.fillStyle = '#6b7280'; g2.font = F(600, 19); g2.fillText(credit, cx + 34 * K, cy + 160 * K); g2.restore();
+}
+function stepChip(n, total, name, phase, u, S) {
+  const a = clamp(u / .5) * clamp((S.d - u) / .4); g2.save(); g2.globalAlpha = a; const x = 40 * K - (1 - easeOut(u / .6)) * 60 * K, y = 34 * K;
+  g2.font = F(800, 26); const tw = g2.measureText(name).width; card(x, y, tw + 110 * K, 58 * K, 1, 'rgba(255,253,248,.97)', 29 * K);
+  g2.fillStyle = ACC; g2.beginPath(); g2.arc(x + 29 * K, y + 29 * K, 22 * K, 0, 7); g2.fill(); g2.fillStyle = '#fff'; g2.font = F(800, 22); g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(String(n), x + 29 * K, y + 31 * K);
+  g2.textAlign = 'left'; g2.fillStyle = INK; g2.font = F(800, 26); g2.fillText(name, x + 64 * K, y + 31 * K);
+  g2.font = F(700, 15); g2.fillStyle = 'rgba(255,255,255,.92)'; g2.fillText(`STEP ${n} / ${total}` + (phase ? '  ·  ' + phase : ''), x + 8 * K, y + 76 * K); g2.restore();
+}
+function subtitles(t, i, S) {
+  const txt = P.scenes[i].sub; if (!txt) return;
+  const vs = S.t + S.off; const parts = txt.split('|'); const tot = parts.reduce((a, p) => a + p.length, 0); let acc = vs, cur = null;
+  for (const p of parts) { const d = p.length / tot * S.vo; if (t >= acc && t < acc + d + .25) cur = { p, a: acc, b: acc + d }; acc += d; }
+  if (!cur || t >= vs + S.vo + .4) return;
+  const a = clamp((t - cur.a) / .2) * clamp((cur.b + .25 - t) / .2 + (cur.b > vs + S.vo - .1 ? 1 : 0)); const font = F(600, 25); const lines = wrapLines(cur.p, 960 * K, font);
+  g2.save(); g2.globalAlpha = clamp(a); g2.font = font; const lh = 34 * K, bh = lines.length * lh + 22 * K, by = H - 40 * K - bh; let mw = 0; lines.forEach(l => mw = Math.max(mw, g2.measureText(l).width));
+  g2.fillStyle = 'rgba(15,22,35,.62)'; rr(g2, W / 2 - mw / 2 - 22 * K, by, mw + 44 * K, bh, 16 * K); g2.fill(); g2.fillStyle = '#fff'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; lines.forEach((l, k) => g2.fillText(l, W / 2, by + 11 * K + lh / 2 + k * lh)); g2.restore();
+}
+
+/* ---------- render ---------- */
+const STEP_TOTAL = Math.max(0, ...P.scenes.map(s => s.step ? s.step[0] : 0));
+function sceneAt(t) { let i = 0; for (let k = 0; k < SC.length; k++) if (t >= SC[k].t) i = k; return i; }
+window.renderAt = function (t) {
+  const i = sceneAt(t), S = SC[i], u = t - S.t, un = u / S.d, D = P.scenes[i];
+  applyCam(camAt(i, un));
+  resetSubject(); if (SCENE_FX[i]) SCENE_FX[i](u, S, t);
+  // mascot: shown in scenes with "mascot": "hop" | "wave" | "point" | "idle"
+  mascot.visible = !!D.mascot;
+  if (mascot.visible) { const pos = D.mascotPos || [-38, -25, 34]; mascot.position.set(...pos); mascot.rotation.y = .4; mascot.scale.setScalar(Math.max(.001, back(clamp(u / .8))) * 1.1);
+    animMascot(t, D.mascot === 'wave' && u < S.d - 4.5 ? 'idle' : (D.mascot === 'hop' && u > 1.5 ? 'point' : D.mascot)); }
+  renderer.render(scene, camera);
+
+  g2.clearRect(0, 0, W, H); g2.drawImage(renderer.domElement, 0, 0);
+  const vg = g2.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * .95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,20,35,.35)'); g2.fillStyle = vg; g2.fillRect(0, 0, W, H);
+  const LA = (a, b) => clamp((u - a) / .4) * (1 - clamp((u - b) / .4));
+  (D.labels || []).forEach(L => label3D(V3(...L.at), L.text, LA(L.start ?? 1, L.end ?? 999), L.dx ?? 60, L.dy ?? -50, L.color || ACC));
+  if (D.badge) badge(D.badge.text, D.badge.sub, clamp((u - (D.badge.start ?? .5)) / (D.badge.secs ?? 6)), D.badge.color || ACC2, clamp(u / .5));
+  if (D.step) stepChip(D.step[0], STEP_TOTAL, D.step[1], D.step[2], u, S);
+  if (D.list) listCards(D.list.title, D.list.items, D.list.starts || D.list.items.map((_, k) => 1.2 + k * 2.4), u, [ACC, ACC2, '#2f9e6b', '#ff9a3c']);
+  if (D.type === 'title') titleCard(u, S, P.kicker || '', P.title, P.subtitle || '', P.credit || '');
+  if (D.type === 'end') endCard(u, P.endTitle || (P.title + ' ✓'), P.endLine || '', P.credit || '');
+  { const done = clamp(t / DURATION); g2.fillStyle = 'rgba(255,255,255,.25)'; rr(g2, 40 * K, H - 14 * K, W - 80 * K, 5 * K, 3 * K); g2.fill(); g2.fillStyle = GOLD; rr(g2, 40 * K, H - 14 * K, (W - 80 * K) * done, 5 * K, 3 * K); g2.fill(); }
+  subtitles(t, i, S);
+  const fd = clamp(1 - t / .7) + clamp((t - (DURATION - 1.2)) / 1.2); if (fd > 0) { g2.fillStyle = `rgba(8,12,20,${clamp(fd)})`; g2.fillRect(0, 0, W, H); }
+};
+window.grab = (t, q = .93) => { window.renderAt(t); return out.toDataURL('image/jpeg', q); };
+window.grab3d = (t) => { window.renderAt(t); return renderer.domElement.toDataURL('image/png'); };
+window.READY = true;
+</script></body></html>

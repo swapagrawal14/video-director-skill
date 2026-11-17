@@ -1,0 +1,606 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Baloo;src:url(fonts/baloo2.ttf);font-weight:400 800}
+html,body{margin:0;background:#000;overflow:hidden}
+canvas{display:block}
+#gl{position:absolute;left:0;top:0}
+</style></head>
+<body>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from './node_modules/three/examples/jsm/environments/RoomEnvironment.js';
+await Promise.all(['500','600','700','800'].map(w => document.fonts.load(w + ' 40px Baloo')));
+
+const W = 1280, H = 720;
+/* ---------- timeline ---------- */
+const VO = [9.52, 10.32, 17.12, 10.24, 12.64, 11.44, 11.04, 8.72, 13.84, 9.2, 9.52, 10.72, 13.52, 10.8, 11.36, 7.68, 10.72, 12.32, 12.24, 11.68, 8.72];
+const EXTRA = [0.8, 0.6, 0.5, 0.8, 0.6, 0.8, 0.6, 0.8, 1.6, 0.6, 0.8, 0.8, 1.4, 1.2, 0.6, 2.4, 1.4, 1.0, 1.0, 0.6, 0];
+const SC = []; { let t = 0; VO.forEach((v, i) => { const off = i === 0 ? 2.8 : 0.5; const d = off + v + EXTRA[i] + (i === VO.length - 1 ? 3.0 : 0.6); SC.push({ t, d, off, vo: v }); t += d; }); }
+const DURATION = SC[SC.length - 1].t + SC[SC.length - 1].d;
+window.DURATION = DURATION; window.VOSTART = SC.map(s => s.t + s.off);
+
+/* ---------- utils ---------- */
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647, (seed - 1) / 2147483646);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
+const back = x => { x = clamp(x); const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+const UP = V3(0, 1, 0), YA = V3(0, 1, 0);
+
+/* ---------- renderer ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.domElement.id = 'gl';
+const out = document.createElement('canvas'); out.width = W; out.height = H; document.body.appendChild(out);
+const g2 = out.getContext('2d');
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+{
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 576; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 576); gr.addColorStop(0, '#24557a'); gr.addColorStop(.55, '#5fa6b8'); gr.addColorStop(1, '#f2cfa8');
+  g.fillStyle = gr; g.fillRect(0, 0, 1024, 576);
+  for (let i = 0; i < 44; i++) { const x = rnd() * 1024, y = rnd() * 400, r = 15 + rnd() * 60; const rg = g.createRadialGradient(x, y, 0, x, y, r); const col = rnd() > .5 ? '255,236,200' : '200,240,255'; rg.addColorStop(0, `rgba(${col},${.10 + rnd() * .14})`); rg.addColorStop(.7, `rgba(${col},${.06})`); rg.addColorStop(1, `rgba(${col},0)`); g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; scene.background = t;
+}
+const camera = new THREE.PerspectiveCamera(32, W / H, 1, 3000);
+scene.add(new THREE.HemisphereLight('#fff1dc', '#5a7a88', .6));
+const key = new THREE.DirectionalLight('#fff0d8', 2.5); key.position.set(-90, 160, 160); key.castShadow = true;
+key.shadow.mapSize.set(1536, 1536); Object.assign(key.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 20, far: 600 }); key.shadow.bias = -.0004; key.shadow.normalBias = .3; key.shadow.radius = 6;
+scene.add(key);
+const rim = new THREE.DirectionalLight('#bfe6ff', 1.3); rim.position.set(120, 80, -160); scene.add(rim);
+const fill = new THREE.PointLight('#ffd2b0', 1300, 600, 1.6); fill.position.set(110, 90, 170); scene.add(fill);
+
+const M = (color, o = {}) => new THREE.MeshPhysicalMaterial({ color, roughness: .55, metalness: 0, clearcoat: .3, clearcoatRoughness: .4, ...o });
+const shadowAll = o => o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+
+/* ---------- bench ---------- */
+const bench = new THREE.Mesh(new THREE.BoxGeometry(900, 20, 600), M('#c98e5a', { roughness: .45, clearcoat: .6 }));
+bench.position.set(0, -36, 40); bench.receiveShadow = true; scene.add(bench);
+{
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const g = c.getContext('2d');
+  g.fillStyle = '#c98e5a'; g.fillRect(0, 0, 1024, 1024);
+  for (let i = 0; i < 160; i++) { g.strokeStyle = `rgba(${rnd() > .5 ? '120,70,35' : '230,180,130'},${.08 + rnd() * .12})`; g.lineWidth = 1 + rnd() * 5; g.beginPath(); const y = rnd() * 1024; g.moveTo(0, y); for (let x = 0; x <= 1024; x += 64) g.lineTo(x, y + Math.sin(x * .01 + i) * 8 + rnd() * 3); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 2); bench.material.map = t; bench.material.color.set('#ffffff');
+}
+const mat = new THREE.Mesh(new THREE.CylinderGeometry(80, 80, 1.2, 64), M('#3e8e93', { roughness: .8, clearcoat: 0 })); mat.position.set(0, -25.6, 0); mat.receiveShadow = true; scene.add(mat);
+
+/* ---------- arch ---------- */
+const archCtrl = [[0, 27], [9, 25.4], [17, 20.5], [22.5, 13], [25.6, 4.5], [27.6, -5], [29.6, -16], [31, -28], [32, -38], [32.5, -46]];
+const archC = new THREE.CatmullRomCurve3(archCtrl.map(p => V3(p[0], 0, p[1])), false, 'centripetal');
+const AL = archC.getLength();
+const archAt = s => archC.getPointAt(clamp(s / AL));
+const tanAt = s => archC.getTangentAt(clamp(s / AL));
+const TEETH = [['CI', 8.5, 7, 10], ['LI', 6.5, 6, 9], ['C', 7.5, 8, 10.5], ['PM1', 7, 9, 8], ['PM2', 6.5, 9, 7.5], ['M1', 10, 11, 7], ['M2', 9, 10.5, 6.5]];
+let acc = 0; TEETH.forEach(t => { t.s0 = acc; t.sc = acc + t[1] / 2; acc += t[1]; t.s1 = acc; });
+const S_END = acc;
+const nrm = s => { const t = tanAt(s); return V3(-t.z, 0, t.x).normalize().multiplyScalar(-1); };
+{ const n0 = nrm(0.1); if (n0.z < 0) window.__flip = true; }
+const N = s => { const n = nrm(s); return window.__flip ? n.multiplyScalar(-1) : n; };
+
+function toothGeo(type, md, ll, h) {
+  const g = new THREE.SphereGeometry(1, 40, 28); const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    if (y < 0) y *= .25;
+    if (type === 'CI' || type === 'LI') { x *= 1 + .18 * y; z *= 1 - .45 * Math.max(0, y); y = Math.min(y, .93); }
+    else if (type === 'C') { y *= 1 + .18 * (1 - Math.abs(x)); z *= 1 - .3 * Math.max(0, y); }
+    else { y = Math.min(y, .78); if (y > .6) y += .1 * Math.cos(x * Math.PI * (type === 'M1' || type === 'M2' ? 2 : 1.5)) * Math.cos(z * Math.PI * 1.5); }
+    p.setXYZ(i, x * md / 2, y * h, z * ll / 2);
+  }
+  g.computeVertexNormals(); return g;
+}
+
+/* ---------- typodont ---------- */
+const typo = new THREE.Group(); scene.add(typo);
+const toothMat = M('#f7f1e4', { roughness: .4, clearcoat: .35, clearcoatRoughness: .3 });
+const gumMat = M('#f08a9b', { roughness: .42, clearcoat: .55, clearcoatRoughness: .25, sheen: .4, sheenColor: '#ffd0da' });
+const YG_U = 11, YG_L = -11, GUM_U = 9.8, GUM_L = -9.8;
+const ARCHES = { U: { sc: 1, dz: 0 }, L: { sc: .9, dz: -1.2 } };
+function archPt(arch, s, side) { const A = ARCHES[arch]; const p = archAt(s); return V3(p.x * A.sc * side, 0, p.z * A.sc + A.dz); }
+function archN(s, side) { const n = N(s); return V3(n.x * side, 0, n.z).normalize(); }
+function archT(s, side) { const t = tanAt(s); return V3(t.x * side, 0, t.z).normalize(); } // distal direction
+// gums
+function horseshoe(arch, extra) {
+  const A = ARCHES[arch]; const outer = [], inner = [];
+  for (let i = 0; i <= 50; i++) { const s = i / 50 * (S_END + .5); const p = archAt(s), n = N(s); const ll = (s < TEETH[1].sc ? 7 : s < TEETH[4].sc ? 8.5 : 10.5) * A.sc; const o = ll / 2 + extra;
+    outer.push([(p.x + n.x * o) * 1, p.z + n.z * o]); inner.push([(p.x - n.x * o), p.z - n.z * o]); }
+  const sc = (q) => [q[0] * A.sc, q[1] * A.sc + A.dz];
+  const loop = [...outer.map(sc), ...inner.slice().reverse().map(sc), ...inner.slice(1).map(q => sc([-q[0], q[1]])), ...outer.slice().reverse().slice(0, -1).map(q => sc([-q[0], q[1]]))];
+  return { loop, inner: [...inner.map(sc), ...inner.slice(1).reverse().map(q => sc([-q[0], q[1]]))] };
+}
+function extrudeXZ(poly, depth, bevel, matl) {
+  const sh = new THREE.Shape(poly.map(p => new THREE.Vector2(p[0], -p[1])));
+  const m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 4 }), matl);
+  m.rotation.x = -Math.PI / 2; m.castShadow = m.receiveShadow = true; return m;
+}
+{
+  const hu = horseshoe('U', 2.4), hl = horseshoe('L', 2.4);
+  const gu = extrudeXZ(hu.loop, 5, 1.5, gumMat); gu.position.y = GUM_U + 1.5; typo.add(gu);
+  const pal = extrudeXZ(hu.inner, 2, 0, gumMat); pal.position.y = 13.5; typo.add(pal);
+  const gl = extrudeXZ(hl.loop, 5, 1.5, gumMat); gl.position.y = GUM_L - 5 - 1.5; typo.add(gl);
+  const flo = extrudeXZ(hl.inner, 2, 0, M('#e57a8e', { roughness: .5 })); flo.position.y = -15.5; typo.add(flo);
+  const baseMat = M('#dfe6ee', { roughness: .35, clearcoat: .7 });
+  const base = extrudeXZ(horseshoe('L', 5).loop.concat(), 6.5, 1, baseMat); base.position.y = -24.4; typo.add(base);
+  const hm = M('#c4ced9', { roughness: .3, clearcoat: .8, metalness: .2 });
+  [-1, 1].forEach(s => { const post = new THREE.Mesh(new THREE.BoxGeometry(6, 44, 8), hm); post.position.set(s * 27, -2, -48); shadowAll(post); typo.add(post);
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 9, 24), hm); pin.rotation.z = Math.PI / 2; pin.position.set(s * 27, 0, -48); typo.add(pin); });
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(60, 6, 6), hm); bar.position.set(0, 18, -47); typo.add(bar);
+}
+// teeth
+const steel = new THREE.MeshPhysicalMaterial({ color: '#f4f7fa', metalness: .7, roughness: .26, clearcoat: .6, envMapIntensity: 1.8 });
+const adhMat = M('#ffe39a', { roughness: .5, clearcoat: .2, transparent: true, opacity: .92 });
+const etchMat = M('#2f7de1', { roughness: .15, clearcoat: 1 });
+const frostMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 1, transparent: true, opacity: 1 });
+const primMat = M('#fff3c8', { roughness: .03, clearcoat: 1, clearcoatRoughness: .02, transparent: true, opacity: .75 });
+const pasteMat = M('#cfc6bb', { roughness: .95, clearcoat: 0 });
+const LIGC = ['#ff5c8a', '#2ec4b6'];
+function makeAttachment(isTube) {
+  const g = new THREE.Group(); const body = new THREE.Group(); g.add(body);
+  if (!isTube) {
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(3.6, 3.4, .3), steel); pad.position.z = .15; body.add(pad);
+    const stem = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.0, .9), steel); stem.position.z = .7; body.add(stem);
+    [1, -1].forEach(s => { const w = new THREE.Mesh(new THREE.BoxGeometry(3.1, 1.05, 1.35), steel); w.position.set(0, s * .95, .95); body.add(w); });
+    g.userData.slotZ = 1.25;
+  } else {
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(4.6, 3.4, .3), steel); pad.position.z = .15; body.add(pad);
+    const tb = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 4.4, 20), steel); tb.rotation.z = Math.PI / 2; tb.position.z = 1.15; body.add(tb);
+    const hk = new THREE.Mesh(new THREE.CylinderGeometry(.35, .35, 2.2, 10), steel); hk.position.set(-1.4, -1.4, 1.2); body.add(hk);
+    g.userData.slotZ = 1.15;
+  }
+  const adh = new THREE.Mesh(new THREE.BoxGeometry(isTube ? 4.9 : 3.9, 3.7, .32), adhMat); adh.position.z = .1; g.add(adh);
+  const etch = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), etchMat); etch.scale.set(2.4, 2.3, .55); g.add(etch);
+  const frost = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), frostMat); frost.scale.set(2.5, 2.4, .32); g.add(frost);
+  const prim = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), primMat); prim.scale.set(2.55, 2.45, .4); g.add(prim);
+  const paste = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), pasteMat); paste.scale.set(2.6, 2.6, .7); g.add(paste);
+  const lig = new THREE.Mesh(new THREE.TorusGeometry(1.45, .42, 10, 28), M('#ff5c8a', { roughness: .3, clearcoat: .9 })); lig.position.z = 1.05; lig.scale.y = 1.08; if (!isTube) g.add(lig);
+  shadowAll(g);
+  Object.assign(g.userData, { body, adh, etch, frost, prim, paste, lig, isTube });
+  return g;
+}
+const TEETHALL = [], BOND = [];
+const MAL = { // arch side idx : [labial(+)/lingual(-) mm, vertical mm (+ toward gum), rotation rad]
+  'U1-0': [0, 0, .22], 'U-1-0': [.4, 0, -.1], 'U-1-1': [-1.7, .3, -.28], 'U1-2': [1.3, 1.3, .12], 'U1-1': [.6, 0, .15],
+  'L1-0': [-1.2, 0, .2], 'L-1-1': [.2, 0, .32], 'L1-1': [.9, .3, -.2], 'L-1-0': [.5, 0, -.12], 'L-1-2': [.9, .6, 0] };
+['U', 'L'].forEach(arch => [1, -1].forEach(side => TEETH.forEach((T, idx) => {
+  const A = ARCHES[arch]; const g = new THREE.Group(); typo.add(g);
+  const geo = toothGeo(T[0], T[1] * .97 * A.sc, T[2] * A.sc, T[3] * (arch === 'U' ? 1 : .9));
+  const m = new THREE.Mesh(geo, toothMat); m.castShadow = m.receiveShadow = true; if (arch === 'U') m.rotation.z = Math.PI; g.add(m);
+  const p = archPt(arch, T.sc, side), tg = tanAt(T.sc);
+  g.position.set(p.x, arch === 'U' ? YG_U : YG_L, p.z);
+  g.rotation.y = side > 0 ? Math.atan2(-tg.z, tg.x) : Math.atan2(-tg.z, -tg.x);
+  const h = T[3] * (arch === 'U' ? 1 : .9) * (idx <= 1 ? .93 : idx === 2 ? .98 : .86);
+  const rec = { g, m, arch, side, idx, T, n: archN(T.sc, side), base: g.position.clone(), rotY: g.rotation.y, mal: MAL[arch + side + '-' + idx] || [0, 0, 0], incisal: arch === 'U' ? YG_U - h : YG_L + h };
+  TEETHALL.push(rec);
+})));
+typo.updateMatrixWorld(true);
+const ray = new THREE.Raycaster();
+TEETHALL.forEach(r => {
+  if (r.idx > 5) return;
+  const gum = r.arch === 'U' ? GUM_U : GUM_L; const yb = (r.incisal + gum) / 2 + (r.idx === 5 ? (r.arch === 'U' ? -.4 : .4) : 0);
+  const c = r.base.clone(); c.y = yb; const o = c.clone().addScaledVector(r.n, 30);
+  ray.set(o, r.n.clone().multiplyScalar(-1)); const hit = ray.intersectObject(r.m, false)[0];
+  const pt = hit ? hit.point : c.clone().addScaledVector(r.n, r.T[2] / 2);
+  let nn = hit ? hit.face.normal.clone().transformDirection(r.m.matrixWorld) : r.n.clone(); nn.y *= .5; nn.normalize();
+  const at = makeAttachment(r.idx === 5); scene.add(at);
+  const z = nn, x = V3().crossVectors(UP, z).normalize(), y = V3().crossVectors(z, x);
+  at.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); at.position.copy(pt);
+  r.g.attach(at); r.at = at;
+  at.userData.lig.material = at.userData.lig.material.clone(); at.userData.lig.material.color.set(LIGC[(r.idx + (r.arch === 'U' ? 0 : 1)) % 2]);
+});
+// bonding order: U right M1 -> U left M1, then L
+['U', 'L'].forEach(arch => { const R = TEETHALL.filter(r => r.arch === arch && r.side === 1 && r.idx <= 5).sort((a, b) => b.idx - a.idx); const Lf = TEETHALL.filter(r => r.arch === arch && r.side === -1 && r.idx <= 5).sort((a, b) => a.idx - b.idx); BOND.push(...R, ...Lf); });
+// retainer shells (aligned positions)
+const shellMat = new THREE.MeshPhysicalMaterial({ color: '#e8f6ff', roughness: .05, clearcoat: 1, transparent: true, opacity: .45, depthWrite: false, side: THREE.DoubleSide });
+const retU = new THREE.Group(), retL = new THREE.Group(); typo.add(retU, retL);
+TEETHALL.forEach(r => { const s = new THREE.Mesh(r.m.geometry, shellMat); r.m.matrixWorld.decompose(s.position, s.quaternion, s.scale); s.scale.multiplyScalar(1.09); (r.arch === 'U' ? retU : retL).add(s); });
+function setAlign(A) {
+  TEETHALL.forEach(r => { const k = 1 - A; const [dl, dv, rot] = r.mal; r.g.position.copy(r.base).addScaledVector(r.n, dl * k); r.g.position.y += (r.arch === 'U' ? dv : -dv) * k; r.g.rotation.y = r.rotY + rot * k; });
+  typo.updateMatrixWorld(true);
+}
+const slotW = r => r.at.localToWorld(V3(0, 0, r.at.userData.slotZ));
+const surfW = (r, z = .3) => r.at.localToWorld(V3(0, 0, z));
+
+/* ---------- archwire ---------- */
+const nitiMat = new THREE.MeshPhysicalMaterial({ color: '#d9dfe6', metalness: .85, roughness: .25, clearcoat: .6, transparent: true, opacity: 1 });
+const wires = { U: new THREE.Mesh(new THREE.BufferGeometry(), nitiMat), L: new THREE.Mesh(new THREE.BufferGeometry(), nitiMat) };
+scene.add(wires.U, wires.L); wires.U.castShadow = wires.L.castShadow = true;
+const WSEG = 320, WRAD = 8;
+function wirePts(arch) {
+  const list = BOND.filter(r => r.arch === arch); const pts = list.map(slotW);
+  const ends = [[0, 1], [list.length - 1, list.length - 2]].map(([a, b]) => { const pa = pts[a], pb = pts[b]; const d = pa.clone().sub(pb).normalize(); const e1 = pa.clone().addScaledVector(d, 3.0); const e2 = e1.clone().addScaledVector(d, .9); e2.y += arch === 'U' ? 1.6 : -1.6; return [e1, e2]; });
+  return [ends[0][1], ends[0][0], ...pts, ends[1][0], ends[1][1]];
+}
+function updateWire(arch, f, lift = 0) {
+  const m = wires[arch]; if (f <= 0) { m.visible = false; return; }
+  const pts = wirePts(arch).map(p => p.clone().add(V3(0, 0, lift)));
+  const c = new THREE.CatmullRomCurve3(pts, false, 'centripetal'); m.geometry.dispose(); m.geometry = new THREE.TubeGeometry(c, WSEG, .3, WRAD, false); m.userData.curve = c;
+  const k = Math.floor(clamp(f) * WSEG); m.geometry.setDrawRange(0, k * WRAD * 6); m.visible = k > 0;
+}
+
+/* ---------- tools ---------- */
+const placeTool = (tool, p, n, side, up = .55, lat = .35) => { const d = n.clone().multiplyScalar(1).add(V3(0, up, 0)).add(V3(side * lat, 0, 0)).normalize(); tool.quaternion.setFromUnitVectors(YA, d); tool.position.copy(p); tool.visible = true; };
+function handpiece(headType) {
+  const g = new THREE.Group();
+  const hp = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3.2, 40, 24), new THREE.MeshPhysicalMaterial({ color: '#bfe0f0', metalness: .3, roughness: .3, clearcoat: .8 })); hp.position.y = 26; g.add(hp);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 2.6, 6, 20), new THREE.MeshPhysicalMaterial({ color: '#dfe7ec', metalness: .8, roughness: .25 })); neck.position.y = 3.5 + 0; g.add(neck);
+  let head;
+  if (headType === 'cup') { head = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 1.6, 2.6, 20, 1, true), M('#ff9db0', { roughness: .6, side: THREE.DoubleSide })); head.position.y = .8; }
+  else if (headType === 'polish') { head = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 1.6, 2.6, 20, 1, true), M('#f4f4f0', { roughness: .6, side: THREE.DoubleSide })); head.position.y = .8; }
+  else { head = new THREE.Mesh(new THREE.CylinderGeometry(.9, 1.1, 3.2, 12), new THREE.MeshPhysicalMaterial({ color: '#c9a64a', metalness: 1, roughness: .3 })); head.position.y = 1.2;
+    const sh = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 2, 8), steel); sh.position.y = 3; g.add(sh); }
+  g.add(head); g.userData.head = head; shadowAll(g); g.visible = false; scene.add(g); return g;
+}
+const prophyHP = handpiece('cup'), burHP = handpiece('bur'), polishHP = handpiece('polish');
+function syringe(col, tipCol) { const g = new THREE.Group();
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 26, 20), M(col, { roughness: .2, clearcoat: 1 })); barrel.position.y = 18; g.add(barrel);
+  const plunger = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 10, 12), M('#f4f4f4')); plunger.position.y = 35; g.add(plunger);
+  const fl = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.6, .8, 20), M('#f4f4f4')); fl.position.y = 31; g.add(fl);
+  const tip = new THREE.Mesh(new THREE.CylinderGeometry(.35, .7, 5, 10), M(tipCol)); tip.position.y = 2.5; g.add(tip);
+  shadowAll(g); g.visible = false; scene.add(g); return g; }
+const etchSyr = syringe('#3b82e6', '#1e3a8a');
+const airSyr = (() => { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.8, 34, 20), M('#c8d0d8', { metalness: .4, roughness: .3, clearcoat: .8 })); b.position.y = 22; g.add(b);
+  const n = new THREE.Mesh(new THREE.CylinderGeometry(.6, .9, 6, 12), steel); n.position.y = 3; g.add(n); shadowAll(g); g.visible = false; scene.add(g); return g; })();
+const microbrush = (() => { const g = new THREE.Group(); const h = new THREE.Mesh(new THREE.CylinderGeometry(.45, .55, 32, 10), M('#7b4bd1', { clearcoat: .8 })); h.position.y = 17; g.add(h);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(1.1, 14, 10), M('#ffb347', { roughness: .9 })); tip.position.y = .6; g.add(tip); shadowAll(g); g.visible = false; scene.add(g); return g; })();
+const tweezer = (() => { const g = new THREE.Group(); [1, -1].forEach(s => { const a = new THREE.Mesh(new THREE.BoxGeometry(.7, 42, 1.6), steel); a.position.set(s * 1.4, 22, 0); a.rotation.z = -s * .05; g.add(a); const t = new THREE.Mesh(new THREE.BoxGeometry(.6, 4, 1.2), steel); t.position.set(s * 2.0, 1.6, 0); g.add(t); });
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(4.6, 10, 2), M('#2ec4b6', { clearcoat: .8 })); grip.position.y = 34; g.add(grip); shadowAll(g); g.visible = false; scene.add(g); return g; })();
+const explorer = (() => { const g = new THREE.Group(); const h = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 30, 12), M('#9aa6b2', { metalness: .6, roughness: .3 })); h.position.y = 22; g.add(h);
+  const sh = new THREE.Mesh(new THREE.CylinderGeometry(.35, .5, 7, 8), steel); sh.position.y = 4; g.add(sh); shadowAll(g); g.visible = false; scene.add(g); return g; })();
+const gauge = (() => { const g = new THREE.Group(); const h = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 34, 12), M('#9aa6b2', { metalness: .6, roughness: .3 })); h.position.y = 20; g.add(h);
+  const star = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, .7, 8), steel); star.position.y = 2.5; star.rotation.x = Math.PI / 2; g.add(star); shadowAll(g); g.visible = false; scene.add(g); return g; })();
+gauge.scale.setScalar(.5);
+const cureLight = (() => { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.6, 46, 24), M('#f5f7fa', { clearcoat: 1, roughness: .2 })); b.position.y = 33; g.add(b);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 3, 24), M('#3b82c4', { clearcoat: 1 })); band.position.y = 20; g.add(band);
+  const guide = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.4, 10, 20), new THREE.MeshPhysicalMaterial({ color: '#ff9a3c', roughness: .1, transparent: true, opacity: .8, clearcoat: 1 })); guide.position.y = 6; g.add(guide);
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(2.1, 16, 12), new THREE.MeshBasicMaterial({ color: '#6aa8ff' })); glow.position.y = 1; g.add(glow);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(4.5, 6, 24, 1, true), new THREE.MeshBasicMaterial({ color: '#5b9dff', transparent: true, opacity: .35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); cone.position.y = -2; g.add(cone); g.userData.cone = cone; g.userData.glow = glow;
+  b.castShadow = true; g.visible = false; scene.add(g); return g; })();
+function plier(handleCol) {
+  const g = new THREE.Group(); const inner = new THREE.Group(); g.add(inner); const grip = M(handleCol, { roughness: .45, clearcoat: .7 });
+  [1, -1].forEach(s => { const c = new THREE.CatmullRomCurve3([V3(0, 0, 0), V3(s * 3, 0, -14), V3(s * 7, 0, -38), V3(s * 9, 0, -62)]);
+    inner.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 2.1, 12), grip)); const b = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.4, 13), steel); b.position.set(s * 1.4, 0, 7.5); b.rotation.y = -s * .08; inner.add(b);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(1.0, 3.4, 1.4), steel); tip.position.set(s * 1.0, 0, 14.2); inner.add(tip); });
+  const pivot = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 4, 20), steel); pivot.position.z = .5; inner.add(pivot);
+  inner.rotation.x = Math.PI / 2; inner.position.y = 15; shadowAll(g); return g;
+}
+const debPlier = plier('#e85d4a'); debPlier.scale.setScalar(.55); debPlier.visible = false; scene.add(debPlier);
+// cheek retractor + cotton rolls
+const clearMat = new THREE.MeshPhysicalMaterial({ color: '#cfe9ff', roughness: .08, clearcoat: 1, transparent: true, opacity: .42, depthWrite: false });
+const retractor = (() => { const g = new THREE.Group(); const pts = []; for (let i = 0; i < 64; i++) { const a = i / 64 * Math.PI * 2; const x = Math.cos(a), y = Math.sin(a); pts.push(V3(Math.sign(x) * Math.pow(Math.abs(x), .55) * 38, Math.sign(y) * Math.pow(Math.abs(y), .7) * 25, 30 - 9 * x * x)); }
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 200, 2.0, 12, true), clearMat));
+  [1, -1].forEach(s => { const h = new THREE.Mesh(new THREE.TorusGeometry(9, 1.8, 10, 30, Math.PI * 1.2), clearMat); h.position.set(s * 40, 0, 26); h.rotation.y = s * 1.2; h.rotation.z = Math.PI * .4 * s; g.add(h); });
+  g.visible = false; scene.add(g); return g; })();
+const cotton = []; [1, -1].forEach(s => { const c = new THREE.Mesh(new THREE.CapsuleGeometry(2.2, 10, 6, 14), M('#fbfbf8', { roughness: 1, clearcoat: 0 })); const p = archPt('L', 33, s); const n = archN(33, s); c.position.copy(p.addScaledVector(n, 7.5)); c.position.y = -11; const t = archT(33, s); c.quaternion.setFromUnitVectors(YA, t); c.castShadow = true; c.visible = false; scene.add(c); cotton.push(c); });
+
+/* ---------- particles ---------- */
+const drops = new THREE.InstancedMesh(new THREE.SphereGeometry(.45, 10, 8), new THREE.MeshPhysicalMaterial({ color: '#d7f0ff', roughness: 0, clearcoat: 1, transparent: true, opacity: .8 }), 90); scene.add(drops);
+const dust = new THREE.InstancedMesh(new THREE.SphereGeometry(.22, 6, 5), new THREE.MeshBasicMaterial({ color: '#fff3c4' }), 60); scene.add(dust);
+const dmy = new THREE.Object3D();
+const hideInst = (im, from = 0) => { for (let k = from; k < im.count; k++) { dmy.position.set(0, -999, 0); dmy.scale.setScalar(.001); dmy.updateMatrix(); im.setMatrixAt(k, dmy.matrix); } im.instanceMatrix.needsUpdate = true; };
+
+/* ---------- armamentarium ---------- */
+const armG = new THREE.Group(); armG.position.set(0, -26, 150); scene.add(armG);
+function bottle(col, capCol, label, h = 30, r = 9) { const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 40), new THREE.MeshPhysicalMaterial({ color: col, roughness: .15, clearcoat: 1 })); body.position.y = h / 2; g.add(body);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(r * .6, r * .7, 8, 30), M(capCol, { clearcoat: .9 })); cap.position.y = h + 4; g.add(cap);
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256; const gg = c.getContext('2d'); gg.fillStyle = '#fffdf6'; gg.fillRect(0, 0, 512, 256); gg.fillStyle = col; gg.fillRect(0, 0, 512, 34); gg.fillRect(0, 222, 512, 34);
+  gg.fillStyle = '#2a2a30'; gg.font = '800 50px Baloo'; gg.textAlign = 'center'; label.split('\n').forEach((l, i, a) => gg.fillText(l, 256, 128 + (i - (a.length - 1) / 2) * 56 + 16));
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const lab = new THREE.Mesh(new THREE.CylinderGeometry(r + .15, r + .15, h * .55, 40, 1, true, -Math.PI * .45, Math.PI * .9), new THREE.MeshPhysicalMaterial({ map: t, roughness: .4 })); lab.position.y = h * .5; g.add(lab);
+  shadowAll(g); return g; }
+const lay = (o, rx = Math.PI / 2) => { const g = new THREE.Group(); const c = o.clone(); c.visible = true; c.rotation.set(0, 0, 0); c.position.set(0, 0, 0); c.quaternion.identity(); c.rotation.x = rx; c.position.y = 3; g.add(c); return g; };
+const bracketTray = (() => { const g = new THREE.Group(); const tray = new THREE.Mesh(new THREE.BoxGeometry(30, 2, 18), M('#2b3442', { clearcoat: .6 })); tray.position.y = 1; g.add(tray);
+  for (let i = 0; i < 10; i++) { const b = makeAttachment(false); b.userData.etch.visible = b.userData.frost.visible = b.userData.prim.visible = b.userData.paste.visible = b.userData.lig.visible = b.userData.adh.visible = false; b.rotation.x = -Math.PI / 2; b.position.set(-11.5 + (i % 5) * 5.7, 2.1, i < 5 ? -4 : 4); b.scale.setScalar(1.15); g.add(b); }
+  shadowAll(g); return g; })();
+const archwireCoil = (() => { const pts = []; for (let i = 0; i <= 40; i++) { const a = -Math.PI / 2 + (i / 40 - .5) * Math.PI * 1.1; pts.push(V3(Math.cos(a + Math.PI / 2) * 0 + Math.sin(a) * 16, 1.2, -Math.cos(a) * 14 + 6)); } const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 100, .6, 8), nitiMat); m.castShadow = true; const g = new THREE.Group(); g.add(m); return g; })();
+const ligStick = (() => { const g = new THREE.Group(); const st = new THREE.Mesh(new THREE.BoxGeometry(30, 1.2, 4), M('#ffffff')); st.position.y = 1; g.add(st); for (let i = 0; i < 6; i++) { const r = new THREE.Mesh(new THREE.TorusGeometry(1.8, .7, 8, 20), M(LIGC[i % 2], { clearcoat: .9 })); r.rotation.x = Math.PI / 2; r.position.set(-12.5 + i * 5, 2.2, 0); g.add(r); } shadowAll(g); return g; })();
+const pumiceJar = (() => { const g = bottle('#cfc6bb', '#6b5b4b', 'Pumice', 14, 10); return g; })();
+const retrMini = (() => { const g = new THREE.Group(); const r = retractor.clone(); r.visible = true; r.scale.setScalar(.42); r.rotation.x = -Math.PI / 2; r.position.y = 3; g.add(r); return g; })();
+const ARM = [
+  { o: retrMini, x: -172, label: 'Cheek retractor' },
+  { o: pumiceJar, x: -140, label: 'Pumice' },
+  { o: lay(prophyHP), x: -112, label: 'Prophy cup' },
+  { o: lay(etchSyr), x: -84, label: '37% etchant' },
+  { o: bottle('#ffb347', '#a55b00', 'Primer', 24, 7), x: -58, label: 'Primer' },
+  { o: lay(syringe('#ffd23f', '#8a6d00')), x: -34, label: 'Adhesive' },
+  { o: bracketTray, x: -2, label: 'MBT 0.022 brackets' },
+  { o: lay(tweezer), x: 30, label: 'Bracket tweezer' },
+  { o: lay(gauge), x: 56, label: 'Height gauge' },
+  { o: lay(cureLight), x: 86, label: 'Curing light' },
+  { o: archwireCoil, x: 122, label: 'NiTi archwire' },
+  { o: ligStick, x: 160, label: 'Ligatures' },
+];
+ARM.forEach(a => { a.o.position.set(a.x, 0, 0); a.o.rotation.y = a.ry || 0; armG.add(a.o); a.base = a.o.position.clone(); a.s = 1; });
+ARM[2].o.rotation.y = .5; ARM[3].o.rotation.y = .4; ARM[5].o.rotation.y = -.4; ARM[7].o.rotation.y = .3; ARM[8].o.rotation.y = -.3; ARM[9].o.rotation.y = .3;
+
+/* ---------- mascot "Dentu" ---------- */
+const dentu = (() => {
+  const g = new THREE.Group(); const body = new THREE.Group(); g.add(body);
+  const white = M('#fbf8f2', { roughness: .32, clearcoat: .8, clearcoatRoughness: .15, sheen: .5, sheenColor: '#ffffff' });
+  const prof = []; for (let i = 0; i <= 30; i++) { const t = i / 30; const y = t * 30; const r = 15 * Math.sin(Math.PI * clamp(.15 + t * .85)) ** .5 * (1 - .12 * Math.cos(t * 6)); prof.push(new THREE.Vector2(Math.max(.01, r), y)); }
+  prof.push(new THREE.Vector2(.01, 30.5));
+  const crown = new THREE.Mesh(new THREE.LatheGeometry(prof, 48), white); crown.position.y = 10; body.add(crown);
+  [[-6, -5], [6, -5], [-6, 5], [6, 5]].forEach(c => { const s = new THREE.Mesh(new THREE.SphereGeometry(5.2, 24, 16), white); s.position.set(c[0] * .85, 37.2, c[1] * .85); s.scale.y = .55; body.add(s); });
+  const legs = []; [-1, 1].forEach(s => { const l = new THREE.Mesh(new THREE.CapsuleGeometry(4.6, 9, 8, 16), white); l.position.set(s * 6.5, 6, 0); l.rotation.z = s * .12; body.add(l); legs.push(l); });
+  const eyes = []; [-1, 1].forEach(s => { const e = new THREE.Group(); const w = new THREE.Mesh(new THREE.SphereGeometry(4.8, 32, 24), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: .1, clearcoat: 1 })); e.add(w);
+    const ir = new THREE.Mesh(new THREE.SphereGeometry(2.9, 28, 20), new THREE.MeshPhysicalMaterial({ color: '#3a7bd5', roughness: .1, clearcoat: 1 })); ir.position.z = 3.9; ir.scale.z = .45; e.add(ir);
+    const pu = new THREE.Mesh(new THREE.SphereGeometry(1.7, 20, 14), new THREE.MeshBasicMaterial({ color: '#0d0d14' })); pu.position.z = 4.85; pu.scale.z = .35; e.add(pu);
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(.7, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' })); hl.position.set(-.9, 1.1, 5.4); e.add(hl);
+    const lid = new THREE.Mesh(new THREE.SphereGeometry(5.1, 28, 16, 0, Math.PI * 2, 0, Math.PI / 2), white); e.add(lid); e.userData.lid = lid;
+    e.position.set(s * 6.2, 28, 11.5); body.add(e); eyes.push(e); });
+  [-1, 1].forEach(s => { const c = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), new THREE.MeshStandardMaterial({ color: '#ff9aa8', transparent: true, opacity: .7, roughness: 1 })); c.scale.set(1, .6, .3); c.position.set(s * 10.5, 22, 12.4); body.add(c); });
+  // smile with tiny braces!
+  const sm = new THREE.Mesh(new THREE.TorusGeometry(4, .75, 10, 30, Math.PI), M('#5a2630')); sm.rotation.z = Math.PI; sm.position.set(0, 21.5, 14); body.add(sm);
+  for (let k = -2; k <= 2; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.3, .8), steel); const a = Math.PI + (k + 2.5) / 5 * Math.PI; b.position.set(Math.cos(a) * -4 * -1 * 0 + k * 1.6, 21.5 - Math.sqrt(Math.max(0, 16 - (k * 1.6) ** 2)) + .1, 14.6); body.add(b); }
+  const arms = []; [-1, 1].forEach(s => { const a = new THREE.Group(); const m = new THREE.Mesh(new THREE.CapsuleGeometry(2.2, 9, 6, 12), white); m.position.y = -6; a.add(m); const hnd = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 12), white); hnd.position.y = -12; a.add(hnd); a.position.set(s * 14.5, 24, 0); a.rotation.z = s * .5; body.add(a); arms.push(a); });
+  shadowAll(g); g.userData = { body, eyes, arms, legs }; scene.add(g); return g;
+})();
+function animDentu(t, mode) {
+  const u = dentu.userData; const b = u.body;
+  const hop = Math.abs(Math.sin(t * 4.2)) * (mode === 'hop' ? 1 : .25);
+  b.position.y = hop * 4; const sq = 1 + (mode === 'hop' ? .06 : .02) * Math.cos(t * 8.4);
+  b.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq)); b.rotation.z = Math.sin(t * 2.1) * .06;
+  u.arms[1].rotation.z = mode === 'wave' ? -2.4 + Math.sin(t * 9) * .4 : (mode === 'point' ? -1.7 : .5 + Math.sin(t * 3) * .1);
+  u.arms[0].rotation.z = -.5 - Math.sin(t * 3) * .1;
+  const bl = ((t * .9) % 3.1) < .14 ? 1 : 0; u.eyes.forEach(e => { e.userData.lid.rotation.x = bl ? -.2 : -1.9; });
+}
+
+/* ---------- shots ---------- */
+const camK = (tx, ty, tz, dist, az, el) => ({ t: [tx, ty, tz], dist, az, el });
+const FR = (az0, az1, d = 100, y0 = 0, y1 = 0, el0 = .1, el1 = .1) => [camK(0, y0, 22, d, az0, el0), camK(0, y1, 22, d, az1, el1)];
+const SHOTS = [
+  [camK(0, -2, 0, 250, .4, .38), camK(0, -2, 0, 225, -.15, .32)],   //0 intro
+  [camK(10, 4, 26, 80, .55, .12), camK(6, 2, 24, 72, .2, .08)],     //1 parts
+  [camK(-85, -10, 150, 200, 0, .5), camK(90, -10, 150, 200, 0, .45)],//2 arm
+  FR(.35, -.3, 105, 2, -2, .14, .1),                                 //3 prophy
+  [camK(0, 0, 18, 150, .25, .22), camK(0, 0, 18, 128, -.1, .16)],   //4 isolation
+  FR(.4, -.4, 98, 4, -3, .12, .06),                                  //5 etch
+  [camK(4, 6, 30, 50, .25, .08), camK(0, 0, 24, 108, -.05, .1)],    //6 rinse
+  FR(-.25, .25, 104, 0, 0, .1, .1),                                  //7 primer
+  FR(.42, -.42, 96, 4, -3, .1, .06),                                 //8 placement
+  [camK(4, 6, 30, 44, .2, .04), camK(10, 5, 27, 52, .55, .06)],     //9 gauge
+  FR(.3, -.3, 100, 1, -1, .1, .1),                                   //10 flash
+  FR(-.3, .3, 100, 1, -1, .16, .1),                                  //11 cure
+  [camK(0, 3, 20, 125, .5, .22), camK(0, -2, 20, 115, -.5, .1)],    //12 archwire
+  [camK(0, 0, 24, 84, .25, .05), camK(0, 0, 24, 96, -.2, .1)],      //13 ligation
+  [camK(30, 18, 10, 230, .25, .25), camK(30, 18, 10, 220, .05, .22)],//14 instructions
+  [camK(0, 0, 22, 108, 0, .08), camK(0, 0, 22, 100, 0, .06)],       //15 timelapse
+  FR(.3, -.3, 98, 0, 0, .1, .1),                                     //16 debond
+  FR(-.28, .28, 95, 0, 0, .1, .1),                                   //17 cleanup
+  [camK(0, 2, 16, 150, .45, .38), camK(0, 0, 18, 122, .1, .18)],    //18 retainer
+  [camK(30, 18, 10, 230, .1, .25), camK(30, 18, 10, 222, -.05, .24)],//19 rules
+  [camK(30, 18, 10, 222, -.1, .26), camK(30, 18, 10, 212, .15, .26)],//20 outro
+];
+function camAt(i, u) { const [a, b] = SHOTS[i]; const k = ease(u); return { t: a.t.map((v, j) => lerp(v, b.t[j], k)), dist: lerp(a.dist, b.dist, k), az: lerp(a.az, b.az, k), el: lerp(a.el, b.el, k) }; }
+function applyCam(c) { const x = c.t[0] + c.dist * Math.cos(c.el) * Math.sin(c.az), y = c.t[1] + c.dist * Math.sin(c.el), z = c.t[2] + c.dist * Math.cos(c.el) * Math.cos(c.az); camera.position.set(x, y, z); camera.lookAt(c.t[0], c.t[1], c.t[2]); }
+const projectP = v => { const p = v.clone().project(camera); return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H, p.z]; };
+
+/* ---------- 2D overlay content ---------- */
+const STEPS = [null, null, null, [1, 'Prophylaxis'], [2, 'Isolation'], [3, 'Etching'], [3, 'Rinse + dry'], [4, 'Primer'], [5, 'Bracket placement'], [5, 'Height check'], [6, 'Press + flash removal'], [7, 'Light cure'], [8, 'Initial archwire'], [9, 'Ligation'], null, null, [10, 'Debonding'], [11, 'Adhesive cleanup'], [12, 'Retainer handoff'], null, null];
+const SUB = [
+ "Namaste doston! Aaj hum seekhenge braces ka poora procedure, bonding se lekar debonding tak.|Step by step, bilkul clinic ke jaisa.",
+ "Pehle fixed appliance ke main parts dekhiye. Har tooth par bracket, molar par buccal tube,|brackets ke slot mein archwire, aur wire ko hold karne ke liye ligature.",
+ "Humein chahiye: cheek retractor, pumice aur prophy cup, 37% phosphoric acid etchant,|primer aur adhesive, MBT 0.022 brackets, bracket tweezer,|height gauge, curing light, NiTi archwire, aur ligatures.",
+ "Step 1. Prophylaxis. Oil-free aur fluoride-free pumice se labial surfaces saaf kijiye,|taaki plaque aur pellicle hat jaaye. Phir achhe se rinse kijiye.",
+ "Step 2. Isolation. Cheek retractor lagaiye, cotton rolls rakhiye, aur field ko poori tarah dry rakhiye.|Yaad rakhiye, moisture contamination bond failure ka sabse bada kaaran hai.",
+ "Step 3. Etching. 37% phosphoric acid sirf bracket area par,|labial surface ke center mein lagaiye, lagbhag 15 se 30 seconds ke liye.",
+ "Ab kam se kam 10 seconds rinse kijiye, aur oil-free air se dry kijiye.|Etched enamel frosty, chalky white dikhna chahiye. Agar na dikhe, to dobara etch kijiye.",
+ "Step 4. Primer. Microbrush se etched surface par primer ki ek thin layer lagaiye,|aur halki air se use thin kar dijiye.",
+ "Step 5. Bracket placement. Bracket base par adhesive lagaiye, aur bracket tweezer se tooth par rakhiye.|Bracket clinical crown ke center mein, yaani FA point par, long axis ke parallel hona chahiye.",
+ "Height gauge se vertical position check kijiye, MBT chart ke hisaab se.|Yaad rakhiye, bracket ki sahi position hi final result decide karti hai.",
+ "Step 6. Bracket ko firmly press kijiye,|aur explorer se bracket ke chaaron taraf ka extra adhesive, yaani flash, hata dijiye.",
+ "Step 7. Light cure. Har bracket ko mesial aur distal side se, lagbhag 10 seconds cure kijiye.|Exact time aapki light aur adhesive par depend karta hai.",
+ "Step 8. Initial archwire. 0.014 ya 0.016 NiTi wire se shuru kijiye.|Wire ko har bracket slot mein engage karke molar tube mein daaliye, aur distal end cinch back kijiye.",
+ "Step 9. Ligation. Elastomeric modules ya steel ligatures se wire ko har bracket mein secure kijiye.|Aur haan, patients ko colours chunna bahut pasand aata hai!",
+ "Ab patient ko instructions dijiye. Pehle kuch din soft diet, hard aur sticky food avoid karein,|har meal ke baad orthodontic brush se brushing, aur irritation ho to ortho wax.",
+ "Kuch months baad, archwires teeth ko dheere dheere align kar dete hain.|Treatment complete! Ab aata hai debonding day.",
+ "Step 10. Debonding. Pehle ligatures aur archwire nikaliye.|Phir debonding plier ko bracket base par rakhkar halka squeeze kijiye, bracket aasaani se nikal jaayega.",
+ "Step 11. Adhesive cleanup. Low speed par 12-fluted tungsten carbide bur se bacha hua adhesive hataiye,|enamel ko bachaate hue. Phir polishing se smooth, natural shine dijiye.",
+ "Step 12. Retainer handoff. Debonding ke baad retainer dijiye, Hawley ya clear retainer.|Wear time apne protocol ke hisaab se samjhaaiye, kyunki retention ke bina relapse ho sakta hai.",
+ "Yaad rakhne ke teen golden rules. Pehla, dry field matlab strong bond.|Doosra, bracket ki position hi result hai. Aur teesra, debond gently, enamel bachaaiye.",
+ "To ye tha braces ka poora procedure, bonding se debonding tak.|Values apne college protocol se ek baar confirm kar lena. Milte hain agle video mein!"
+];
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function card(x, y, w, h, alpha, fillCol = 'rgba(255,253,248,0.96)', r = 18) { g2.save(); g2.globalAlpha *= alpha; g2.shadowColor = 'rgba(20,30,50,.28)'; g2.shadowBlur = 24; g2.shadowOffsetY = 8; g2.fillStyle = fillCol; rr(g2, x, y, w, h, r); g2.fill(); g2.restore(); }
+function label3D(v, text, a, dx = 60, dy = -50, col = '#e2475b') {
+  if (a <= 0 || !v) return; const [x, y, z] = projectP(v); if (z > 1) return;
+  g2.save(); g2.globalAlpha = clamp(a);
+  g2.font = '700 21px Baloo'; const tw = g2.measureText(text).width + 30; const lx = x + dx, ly = y + dy;
+  g2.strokeStyle = '#ffffff'; g2.lineWidth = 3; g2.shadowColor = 'rgba(0,0,0,.35)'; g2.shadowBlur = 6; g2.beginPath(); g2.moveTo(x, y); g2.lineTo(lx, ly); g2.stroke();
+  g2.fillStyle = col; g2.beginPath(); g2.arc(x, y, 5.5, 0, 7); g2.fill(); g2.strokeStyle = '#fff'; g2.lineWidth = 2.5; g2.stroke();
+  const bx = dx >= 0 ? lx : lx - tw; card(bx, ly - 19, tw, 38, 1, '#ffffff', 19);
+  g2.globalAlpha = clamp(a); g2.fillStyle = '#23324a'; g2.textBaseline = 'middle'; g2.fillText(text, bx + 15, ly + 1); g2.restore();
+}
+function wrapLines(text, maxW, font) { g2.font = font; const words = text.split(' '); const lines = []; let cur = ''; words.forEach(w => { const t = cur ? cur + ' ' + w : w; if (g2.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }); if (cur) lines.push(cur); return lines; }
+function badge(text, sub, prog, col, a) { if (a <= 0) return; g2.save(); g2.globalAlpha = a; const x = W - 250, y = 34; card(x, y, 210, 86, 1, 'rgba(255,253,248,.97)', 24);
+  g2.lineWidth = 7; g2.strokeStyle = 'rgba(0,0,0,.08)'; g2.beginPath(); g2.arc(x + 44, y + 43, 25, 0, 7); g2.stroke(); g2.strokeStyle = col; g2.lineCap = 'round'; g2.beginPath(); g2.arc(x + 44, y + 43, 25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(prog)); g2.stroke();
+  g2.fillStyle = '#23324a'; g2.font = '800 28px Baloo'; g2.textBaseline = 'middle'; g2.fillText(text, x + 82, y + 34); g2.fillStyle = '#6b7280'; g2.font = '600 16px Baloo'; g2.fillText(sub, x + 82, y + 62); g2.restore(); }
+function listCards(title, items, starts, u, cols) {
+  g2.save(); g2.globalAlpha = clamp(u / .5); g2.fillStyle = '#fff'; g2.font = '800 40px Baloo'; g2.shadowColor = 'rgba(0,0,0,.35)'; g2.shadowBlur = 10; g2.fillText(title, W - 620, 128); g2.restore();
+  const hgt = items.length > 3 ? 82 : 92, gap = items.length > 3 ? 94 : 106;
+  items.forEach((r, k) => { const kk = back(clamp((u - starts[k]) / .6)); if (kk <= 0) return; const x = W - 620 + (1 - kk) * 120, y = 158 + k * gap; g2.save(); g2.globalAlpha = clamp(kk); card(x, y, 570, hgt, 1, 'rgba(255,253,248,.97)', 22);
+    g2.fillStyle = cols[k % cols.length]; g2.beginPath(); g2.arc(x + 44, y + hgt / 2, 25, 0, 7); g2.fill(); g2.fillStyle = '#fff'; g2.font = '800 27px Baloo'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(String(k + 1), x + 44, y + hgt / 2 + 2);
+    g2.textAlign = 'left'; g2.fillStyle = '#23324a'; g2.font = '700 25px Baloo'; g2.fillText(r, x + 86, y + hgt / 2 + 2); g2.restore(); });
+}
+
+/* ---------- render ---------- */
+function sceneAt(t) { let i = 0; for (let k = 0; k < SC.length; k++) if (t >= SC[k].t) i = k; return i; }
+const NB = 24;
+window.renderAt = function (t) {
+  const i = sceneAt(t), S = SC[i], u = t - S.t, un = u / S.d;
+  let c = camAt(i, un);
+  if (i > 0 && u < 1.6) { const p = camAt(i - 1, 1); const k = ease(u / 1.6); c = { t: p.t.map((v, j) => lerp(v, c.t[j], k)), dist: lerp(p.dist, c.dist, k), az: lerp(p.az, c.az, k), el: lerp(p.el, c.el, k) }; }
+  c.az += Math.sin(t * .3) * .012; c.el += Math.sin(t * .23) * .008;
+  applyCam(c);
+  const local = (k, a, b) => clamp(((t - SC[k].t) - a) / (b - a));
+  const seq = (k, a, b, j) => clamp(local(k, a, b) * NB - j); // per-tooth sweep 0..1
+  const sweepIdx = (k, a, b) => { const x = local(k, a, b) * NB; return [Math.min(NB - 1, Math.floor(x)), x - Math.floor(x), x > 0 && x < NB]; };
+
+  // alignment
+  const A = i < 15 ? 0 : (i === 15 ? ease(local(15, 1.2, 6.5)) : 1);
+  typo.rotation.y = i === 0 ? Math.sin(t * .4) * .08 : 0; typo.position.x = (i === 14 || i >= 19) ? -14 : 0;
+  setAlign(A);
+  const braceOn = i <= 1 || (i >= 8 && i <= 16);
+
+  BOND.forEach((r, j) => {
+    const U = r.at.userData; let placed = 0, etch = 0, frost = 0, prim = 0, paste = 0, flash = 1, lig = 0, deb = 0, rem = 0;
+    if (i <= 1) { placed = 1; lig = 1; }
+    if (i === 3) paste = seq(3, .8, 6.6, j) * (1 - local(3, 7, 9.5));
+    if (i === 5) etch = seq(5, .8, 10.5, j);
+    if (i === 6) { etch = 1 - local(6, .6, 3); frost = local(6, 1.2, 3.8); }
+    if (i === 7) { frost = 1 - seq(7, .6, 8.2, j); prim = seq(7, .6, 8.2, j); }
+    if (i === 8) { prim = 1; placed = seq(8, .6, 12.6, j); flash = 1.35; }
+    if (i === 9) { placed = 1; flash = 1.35; }
+    if (i === 10) { placed = 1; flash = 1.35 - .35 * seq(10, .8, 9.6, j); }
+    if (i >= 11 && i <= 15) { placed = 1; }
+    if (i === 13) lig = seq(13, .6, 10.4, j);
+    if (i === 14 || i === 15) lig = 1;
+    if (i === 16) { placed = 1; lig = 1 - local(16, .3, 1.8); deb = seq(16, 3.6, 11.6, j); rem = deb > .2 ? 1 : 0; }
+    if (i === 17) rem = 1 - seq(17, .8, 8.6, j);
+    // apply
+    U.body.visible = placed > 0 && deb < 1;
+    if (U.body.visible) {
+      const k = easeOut(placed);
+      U.body.position.set(0, (1 - k) * 7, (1 - k) * 14); U.body.rotation.set(0, 0, (1 - k) * .5);
+      if (deb > 0) { const d = deb; U.body.position.set(d * 3 * r.side, -d * d * 10 * (r.arch === 'U' ? 1 : -1) * .6, d * 16); U.body.rotation.set(d * 2, d * 3, d * 4); U.body.scale.setScalar(1 - d * .6); } else U.body.scale.setScalar(1);
+    }
+    const adhOn = (placed > 0 && deb === 0) || rem > 0;
+    U.adh.visible = adhOn && (i >= 8);
+    if (U.adh.visible) { if (deb > 0 || i === 17) { U.adh.position.set(0, 0, .1); U.adh.scale.set(clamp(rem) * .95 + .001, clamp(rem) * .95 + .001, Math.max(.05, rem)); } else { const k = easeOut(placed); U.adh.position.copy(U.body.position); U.adh.scale.set(flash, flash, 1); } }
+    U.etch.visible = etch > .01; U.etch.scale.set(2.4 * back(etch), 2.3 * back(etch), .55);
+    U.frost.visible = frost > .01 && !(placed >= 1); frostMat.opacity = 1; U.frost.scale.set(2.5, 2.4, .32 * clamp(frost * 1.5));
+    U.prim.visible = prim > .01 && placed < 1; U.prim.scale.set(2.55 * clamp(prim * 1.3), 2.45 * clamp(prim * 1.3), .4);
+    U.paste.visible = paste > .01; U.paste.scale.set(2.6 * back(paste), 2.6 * back(paste), .7);
+    if (!U.isTube) { U.lig.visible = lig > .01 && U.body.visible; const ls = back(lig); U.lig.scale.set(ls + .001, ls * 1.08 + .001, ls + .001); U.lig.position.copy(U.body.position).add(V3(0, 0, 1.05)); }
+  });
+  // frosty/primer visuals for teeth surface
+  toothMat.clearcoat = i === 17 ? lerp(.35, 1, local(17, 9, 11.5)) : (i >= 18 ? 1 : .35);
+  toothMat.clearcoatRoughness = i === 17 ? lerp(.3, .05, local(17, 9, 11.5)) : (i >= 18 ? .05 : .3);
+
+  // wires
+  let wfU = 0, wfL = 0, lift = 0; nitiMat.opacity = 1;
+  if (i <= 1 || (i >= 13 && i <= 15)) { wfU = 1; wfL = 1; }
+  if (i === 12) { wfU = ease(local(12, .8, 6.6)); wfL = ease(local(12, 6.8, 12.6)); }
+  if (i === 16) { const k = local(16, 1.6, 3.4); wfU = wfL = k < 1 ? 1 : 0; lift = k * 18; nitiMat.opacity = 1 - k; }
+  nitiMat.transparent = nitiMat.opacity < 1;
+  updateWire('U', wfU, lift); updateWire('L', wfL, lift);
+
+  // retractor & cotton
+  let rv = 0; if (i === 4) rv = back(local(4, .6, 2)); if ((i >= 5 && i <= 13) || i === 16 || i === 17) rv = 1; if (i === 16) rv = back(local(16, 0, .8));
+  retractor.visible = rv > .01; retractor.scale.set(lerp(.6, 1, clamp(rv)), lerp(.6, 1, clamp(rv)), 1); clearMat.opacity = .42 * clamp(rv);
+  cotton.forEach(cc => { let s = 0; if (i === 4) s = back(local(4, 3.2, 4.4)); if (i >= 5 && i <= 11) s = 1; cc.visible = s > .01; cc.scale.setScalar(Math.max(.001, s)); });
+  // retainer
+  { let k = 0; if (i === 18) k = ease(local(18, 2, 6.5)); if (i >= 19) k = 1; retU.visible = retL.visible = (i >= 18) && (i > 18 || local(18, 1.2, 2) > 0); retU.position.set(0, (1 - k) * 34, (1 - k) * 10); retL.position.set(0, -(1 - k) * 30, (1 - k) * 10); shellMat.opacity = .45 * clamp(local(18, 1.2, 2.4) + (i > 18 ? 1 : 0)); }
+  typo.updateMatrixWorld(true);
+
+  // tools
+  [prophyHP, burHP, polishHP, etchSyr, airSyr, microbrush, tweezer, explorer, gauge, cureLight, debPlier].forEach(o => o.visible = false);
+  hideInst(drops); hideInst(dust);
+  const toolAt = (tool, k, a, b, zOff = .3, up = .55, lat = .35, wob = 0) => { const [j, f, on] = sweepIdx(k, a, b); if (!on) return null; const r = BOND[j], r2 = BOND[Math.min(NB - 1, j + 1)];
+    let p = surfW(r, zOff); if (f > .72 && r2 !== r) { const q = surfW(r2, zOff); const kk = ease((f - .72) / .28); p = p.clone().lerp(q, kk); p.addScaledVector(r.n, Math.sin(kk * Math.PI) * 3); }
+    p.x += Math.sin(t * 40) * wob; placeTool(tool, p, r.n, r.side, r.arch === 'U' ? up : up - .5, lat); return { r, p, f }; };
+  let toolInfo = null;
+  if (i === 3) { toolInfo = toolAt(prophyHP, 3, .8, 6.6, .4, .5, .4, .12); if (toolInfo) prophyHP.userData.head.rotation.y = t * 50;
+    if (u > 6.9 && u < 9.6) { airSyr.visible = true; const sw = (u - 6.9) / 2.7; const p = V3(lerp(30, -30, sw), lerp(4, -4, sw), 44); placeTool(airSyr, p, V3(0, 0, 1), 0, .3, 0);
+      for (let k = 0; k < 90; k++) { const ph = ((t * 2.2 + k / 90) % 1); const tx = lerp(30, -30, sw) + (k % 9 - 4) * 2.2, ty = lerp(4, -4, sw) + ((k * 7) % 11 - 5) * 1.1; dmy.position.set(lerp(p.x, tx, ph), lerp(p.y, ty, ph), lerp(p.z, 30, ph)); dmy.scale.setScalar(1); dmy.updateMatrix(); drops.setMatrixAt(k, dmy.matrix); } drops.instanceMatrix.needsUpdate = true; } }
+  if (i === 5) toolInfo = toolAt(etchSyr, 5, .8, 10.5, .5, .55, .3);
+  if (i === 6) { const sw = local(6, .4, 4.2); if (sw > 0 && sw < 1) { airSyr.visible = true; const p = V3(lerp(26, -26, sw), lerp(6, -6, (sw * 2) % 1), 46); placeTool(airSyr, p, V3(0, 0, 1), 0, .3, 0);
+      for (let k = 0; k < 90; k++) { const ph = ((t * 2.4 + k / 90) % 1); const tx = p.x + (k % 9 - 4) * 2.5, ty = p.y + ((k * 7) % 11 - 5) * 1.3; dmy.position.set(lerp(p.x, tx, ph), lerp(p.y, ty, ph), lerp(p.z, 31, ph)); dmy.scale.setScalar(sw < .55 ? 1 : .001); dmy.updateMatrix(); drops.setMatrixAt(k, dmy.matrix); } drops.instanceMatrix.needsUpdate = true; } }
+  if (i === 7) toolInfo = toolAt(microbrush, 7, .6, 8.2, .5, .55, .35, .15);
+  if (i === 8) { const [j, f, on] = sweepIdx(8, .6, 12.6); if (on && f < .85) { const r = BOND[j]; const p = r.at.localToWorld(r.at.userData.body.position.clone().add(V3(0, 0, 1.4))); placeTool(tweezer, p, r.n, r.side, r.arch === 'U' ? .55 : .05, .35); toolInfo = { r, p }; } }
+  if (i === 9) { const r = BOND.find(b => b.arch === 'U' && b.side === 1 && b.idx === 0); const p = surfW(r, 1.6); p.y = lerp(p.y, r.incisal, .0); placeTool(gauge, p.clone().add(V3(0, -.0, .4)), r.n, 1, -.3, .25); toolInfo = { r, p }; }
+  if (i === 10) toolInfo = toolAt(explorer, 10, .8, 9.6, 1.6, .55, .35, .2);
+  if (i === 11) { toolInfo = toolAt(cureLight, 11, .8, 11.2, 5.5, .35, .3); if (toolInfo) { const pul = .3 + .1 * Math.sin(t * 30); cureLight.userData.cone.material.opacity = pul; cureLight.userData.cone.visible = true; } }
+  if (i === 13) toolInfo = toolAt(explorer, 13, .6, 10.4, 2.2, .55, .35);
+  if (i === 16 && u > 3.4) { const [j, f, on] = sweepIdx(16, 3.6, 11.6); if (on && f < .5) { const r = BOND[j]; const p = surfW(r, 1.0); placeTool(debPlier, p, r.n, r.side, r.arch === 'U' ? .45 : -.05, .45); toolInfo = { r, p }; } }
+  if (i === 17) { if (u < 8.8) { toolInfo = toolAt(burHP, 17, .8, 8.6, .3, .5, .4, .1); if (toolInfo) { burHP.userData.head.rotation.y = t * 60; const wp = toolInfo.p;
+        for (let k2 = 0; k2 < 60; k2++) { const ph = ((t * 2.5 + k2 / 60) % 1); const a = k2 * 2.4; dmy.position.set(wp.x + Math.cos(a) * ph * 10, wp.y + Math.sin(a) * ph * 8, wp.z + ph * 8); dmy.scale.setScalar(1 - ph); dmy.updateMatrix(); dust.setMatrixAt(k2, dmy.matrix); } dust.instanceMatrix.needsUpdate = true; } }
+    else { const sw = local(17, 8.9, 12.3); if (sw < 1) { const j = Math.min(NB - 1, Math.floor(sw * NB)); const r = BOND[j]; placeTool(polishHP, surfW(r, .4), r.n, r.side, r.arch === 'U' ? .5 : 0, .4); polishHP.userData.head.rotation.y = t * 50; toolInfo = { r }; } } }
+
+  // armamentarium
+  ARM.forEach((a, k) => { const s = i === 2 ? back(local(2, .5 + k * 1.25, 1.2 + k * 1.25)) : (i < 2 ? 0 : 1); a.o.visible = s > .01; a.o.position.copy(a.base); a.o.position.y += (1 - clamp(s)) * 20; a.o.scale.setScalar(Math.max(.001, s)); });
+  armG.visible = i >= 1 && i <= 3;
+
+  // mascot
+  dentu.visible = i === 0 || i === 2 || i === 14 || i === 19 || i === 20;
+  if (dentu.visible) {
+    let pos, mode = 'idle', sc = 1;
+    if (i === 0) { const k = back(local(0, 1.0, 2.4)); pos = V3(lerp(-180, -92, k), -25, 34); mode = u < 2.4 ? 'hop' : (u < 7 ? 'wave' : 'idle'); dentu.rotation.y = .5; }
+    if (i === 2) { pos = V3(-200, -26, 150); mode = 'point'; dentu.rotation.y = .6; sc = .8 * back(local(2, 0, 1)); }
+    if (i === 14) { pos = V3(-68, -25, 40); mode = u < 1.5 ? 'hop' : 'point'; dentu.rotation.y = .3; sc = back(local(14, 0, .8)); }
+    if (i === 19) { pos = V3(-68, -25, 40); mode = u < 1.5 ? 'hop' : 'point'; dentu.rotation.y = .5; }
+    if (i === 20) { pos = V3(-68, -25, 40); mode = u > S.d - 4.5 ? 'wave' : 'idle'; dentu.rotation.y = .5; }
+    dentu.position.copy(pos); dentu.scale.setScalar(Math.max(.001, sc) * 1.1); animDentu(t, mode);
+  }
+
+  renderer.render(scene, camera);
+  /* ---------- 2D overlay ---------- */
+  g2.clearRect(0, 0, W, H); g2.drawImage(renderer.domElement, 0, 0);
+  const vg = g2.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * .95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,20,35,.35)'); g2.fillStyle = vg; g2.fillRect(0, 0, W, H);
+  if (i === 11 && toolInfo) { const [x, y] = projectP(toolInfo.r.at.localToWorld(V3(0, 0, 1))); const gr = g2.createRadialGradient(x, y, 0, x, y, 60); gr.addColorStop(0, 'rgba(120,170,255,.55)'); gr.addColorStop(1, 'rgba(120,170,255,0)'); g2.fillStyle = gr; g2.fillRect(x - 60, y - 60, 120, 120); }
+  const LA = (k, a, b) => clamp(((t - SC[k].t) - a) / .4) * (1 - clamp(((t - SC[k].t) - b) / .4));
+  const R = (arch, side, idx) => BOND.find(b => b.arch === arch && b.side === side && b.idx === idx);
+  const uCI = R('U', 1, 0), uM1 = R('U', 1, 5), uLLI = R('U', -1, 1), uC = R('U', 1, 2);
+  const wireMid = () => { const c = wires.U.userData.curve; return c ? c.getPointAt(.47) : null; };
+  if (i === 1) { label3D(uCI.at.localToWorld(V3(0, 1.2, 1.4)), 'Bracket', LA(1, 2.2, 99), -70, -80); label3D(uM1.at.localToWorld(V3(0, 0, 1.6)), 'Buccal tube', LA(1, 3.8, 99), 50, -70, '#3b82c4'); label3D(wireMid(), 'Archwire', LA(1, 5.6, 99), -40, 95, '#2f9e6b'); label3D(uLLI.at.localToWorld(V3(1.2, -1.2, 1.4)), 'Ligature', LA(1, 7.8, 99), -90, -70, '#ff5c8a'); }
+  if (i === 2) ARM.forEach((a, k) => { const v = a.o.position.clone(); armG.localToWorld(v); v.y += 14; label3D(v, a.label, LA(2, 1.0 + k * 1.25, 99), 0, -40 - (k % 2) * 34, '#3b82c4'); });
+  if (i === 3) { label3D(uCI.at.localToWorld(V3(0, 0, .6)), 'Fluoride-free pumice', LA(3, 2, 6.6), -60, -90, '#8a6d55'); label3D(prophyHP.visible ? prophyHP.position.clone() : null, 'Prophy cup', LA(3, 1, 6.4), 70, 80, '#3b82c4'); label3D(V3(0, 0, 32), 'Rinse', LA(3, 7.2, 99), 80, -110, '#3b82c4'); }
+  if (i === 4) { label3D(V3(-30, 20, 30), 'Cheek retractor', LA(4, 1.6, 99), -60, -60, '#3b82c4'); label3D(cotton[0].position.clone(), 'Cotton roll', LA(4, 4.2, 99), 60, 50, '#2f9e6b'); label3D(uCI.at.localToWorld(V3(0, 0, .3)), 'Dry field', LA(4, 6, 99), -60, -80, '#e2475b'); }
+  if (i === 5) { label3D(etchSyr.visible ? etchSyr.position.clone() : null, '37% phosphoric acid', LA(5, 1.2, 10.3), 60, -80, '#3b82e6'); badge('15–30 s', 'etch time', local(5, 1, 10.5), '#3b82e6', clamp(u / .5)); }
+  if (i === 6) { label3D(uCI.at.localToWorld(V3(0, 0, .3)), 'Frosty, chalky white', LA(6, 3.6, 99), -70, -80, '#2f9e6b'); badge('10 s+', 'rinse, phir dry', local(6, .4, 4.2), '#3b82c4', clamp(u / .5)); }
+  if (i === 7) label3D(microbrush.visible ? microbrush.position.clone() : null, 'Thin primer layer', LA(7, 1.4, 8), 60, -80, '#ff9a3c');
+  if (i === 8) { label3D(toolInfo ? toolInfo.p : null, 'Bracket tweezer', LA(8, 1.2, 5), 60, -90, '#2ec4b6'); label3D(uCI.at.localToWorld(V3(0, 0, 1.3)), 'FA point', LA(8, 6.5, 99), -60, -80, '#e2475b'); label3D(uC.at.localToWorld(V3(0, 1.6, 1.3)), 'Long axis ke parallel', LA(8, 9, 99), -40, -95, '#3b82c4'); }
+  if (i === 9) { label3D(gauge.position.clone(), 'MBT height gauge', LA(9, 1.4, 99), 60, -80, '#3b82c4'); label3D(uCI.at.localToWorld(V3(0, -1.3, 1.3)), 'Clinical crown center', LA(9, 4, 99), -80, 70, '#e2475b'); }
+  if (i === 10) { label3D(explorer.visible ? explorer.position.clone() : null, 'Flash hatao', LA(10, 1.2, 9.4), 60, -80, '#e2475b'); label3D(uCI.at.localToWorld(V3(0, -2, .3)), 'Excess adhesive', LA(10, 1.2, 4), -70, 80, '#d4a017'); }
+  if (i === 11) { label3D(cureLight.visible ? cureLight.position.clone() : null, 'Mesial + distal', LA(11, 1.2, 11), 60, -80, '#3b82c4'); badge('~10 s', 'har side', (u * 1.2) % 1, '#5b9dff', clamp(u / .5)); }
+  if (i === 12) { label3D(wires.U.visible ? wires.U.userData.curve.getPointAt(.5) : null, '0.014" / 0.016" NiTi', LA(12, 2.5, 99), 50, -100, '#2f9e6b'); label3D(uM1.at.localToWorld(V3(0, 0, 1.6)), 'Molar tube', LA(12, 1, 6), 60, -70, '#3b82c4'); label3D(wires.U.visible ? wires.U.userData.curve.getPointAt(.005) : null, 'Cinch back', LA(12, 6.6, 99), 60, -40, '#e2475b'); }
+  if (i === 13) { label3D(uCI.at.localToWorld(V3(1.2, 1.2, 1.4)), 'Elastomeric module', LA(13, 3, 99), -70, -90, '#ff5c8a'); }
+  if (i === 16) { label3D(debPlier.visible ? debPlier.position.clone() : null, 'Debonding plier', LA(16, 3.8, 11), 60, -80, '#e85d4a'); label3D(uM1.at.localToWorld(V3(0, 0, .3)), 'Adhesive remnant', LA(16, 6.5, 99), 50, 80, '#d4a017'); }
+  if (i === 17) { label3D(burHP.visible ? burHP.position.clone() : null, 'TC bur, low speed', LA(17, 1, 8.6), 60, -80, '#c9a64a'); label3D(uCI.at.localToWorld(V3(0, 0, .3)), 'Smooth, natural shine', LA(17, 9.6, 99), -70, -80, '#2f9e6b'); }
+  if (i === 18) { label3D(uCI.at.localToWorld(V3(0, -2.5, .8)), 'Clear retainer', LA(18, 5.5, 99), -60, 90, '#3b82c4'); }
+
+  // step chip
+  if (STEPS[i]) { const [n, name] = STEPS[i]; const a = clamp(u / .5) * clamp((S.d - u) / .4); g2.save(); g2.globalAlpha = a; const x = 40 - (1 - easeOut(u / .6)) * 60, y = 34;
+    g2.font = '800 26px Baloo'; const tw = g2.measureText(name).width; card(x, y, tw + 110, 58, 1, 'rgba(255,253,248,.97)', 29);
+    g2.fillStyle = '#e2475b'; g2.beginPath(); g2.arc(x + 29, y + 29, 22, 0, 7); g2.fill(); g2.fillStyle = '#fff'; g2.font = '800 22px Baloo'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(String(n), x + 29, y + 31);
+    g2.textAlign = 'left'; g2.fillStyle = '#23324a'; g2.font = '800 26px Baloo'; g2.fillText(name, x + 64, y + 31);
+    g2.font = '700 15px Baloo'; g2.fillStyle = 'rgba(255,255,255,.9)'; g2.fillText('STEP ' + n + ' / 12' + (n <= 9 ? '  ·  BONDING' : '  ·  DEBONDING'), x + 8, y + 76); g2.restore(); }
+  // progress bar
+  { const done = clamp(t / DURATION); g2.fillStyle = 'rgba(255,255,255,.25)'; rr(g2, 40, H - 14, W - 80, 5, 3); g2.fill(); g2.fillStyle = '#ffd23f'; rr(g2, 40, H - 14, (W - 80) * done, 5, 3); g2.fill(); }
+  if (i === 0) { const a = clamp((u - .3) / .6) * (1 - clamp((u - (S.d - .8)) / .6)); const k = back(clamp((u - .3) / .9));
+    g2.save(); g2.globalAlpha = a; const cw = 580, ch = 236, cx = W - cw - 60, cy = 110 + (1 - k) * 60; card(cx, cy, cw, ch, 1, 'rgba(255,253,248,.97)', 28);
+    g2.fillStyle = '#e2475b'; g2.font = '700 18px Baloo'; g2.fillText('ORTHODONTICS CLINIC · STEP-BY-STEP', cx + 36, cy + 50);
+    g2.fillStyle = '#23324a'; g2.font = '800 58px Baloo'; g2.fillText('Braces Procedure', cx + 34, cy + 114);
+    g2.fillStyle = '#3b82c4'; g2.font = '700 29px Baloo'; g2.fillText('Bonding se Debonding tak', cx + 36, cy + 158);
+    g2.fillStyle = '#6b7280'; g2.font = '600 19px Baloo'; g2.fillText('Swapnil Agrawal (BDS intern)', cx + 36, cy + 202); g2.restore(); }
+  if (i === 14) listCards('Patient instructions', ['Pehle kuch din soft diet', 'Hard aur sticky food avoid', 'Har meal ke baad ortho brush', 'Irritation? Ortho wax lagao'], [1.4, 3.6, 6.2, 8.8], u, ['#e2475b', '#3b82c4', '#2f9e6b', '#ff9a3c']);
+  if (i === 15) { const a = clamp((u - .4) / .5) * (1 - clamp((u - 7.5) / .6)); g2.save(); g2.globalAlpha = a; card(W / 2 - 230, 40, 460, 86, 1, 'rgba(255,253,248,.97)', 28);
+    g2.fillStyle = '#23324a'; g2.font = '800 36px Baloo'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('Kuch months baad…', W / 2, 74); g2.fillStyle = '#3b82c4'; g2.font = '700 17px Baloo'; g2.fillText('teeth aligning', W / 2, 106);
+    g2.fillStyle = 'rgba(0,0,0,.08)'; rr(g2, W / 2 - 180, 120, 360, 6, 3); g2.fill(); g2.fillStyle = '#ffd23f'; rr(g2, W / 2 - 180, 120, 360 * A, 6, 3); g2.fill(); g2.restore();
+    if (A >= 1) { const k = back(clamp((u - 6.8) / .6)); g2.save(); g2.globalAlpha = clamp(k); card(W / 2 - 210, 150 + (1 - k) * 30, 420, 66, 1, '#2f9e6b', 33); g2.fillStyle = '#fff'; g2.font = '800 30px Baloo'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('Treatment complete ✓', W / 2, 184 + (1 - k) * 30); g2.restore(); } }
+  if (i === 19) listCards('3 Golden Rules', ['Dry field = strong bond', 'Bracket position = result', 'Debond gently, enamel bachao'], [2.6, 5.4, 8.4], u, ['#e2475b', '#3b82c4', '#2f9e6b']);
+  if (i === 20) { const a = clamp((u - 1) / .6); const k = back(clamp((u - 1) / .8)); g2.save(); g2.globalAlpha = a; const cw = 540, ch = 196, cx = W - cw - 70, cy = 150 + (1 - k) * 40; card(cx, cy, cw, ch, 1, 'rgba(255,253,248,.97)', 26);
+    g2.fillStyle = '#23324a'; g2.font = '800 42px Baloo'; g2.fillText('Braces Procedure ✓', cx + 34, cy + 72); g2.fillStyle = '#3b82c4'; g2.font = '700 22px Baloo'; g2.fillText('Values college protocol se confirm karo', cx + 34, cy + 116);
+    g2.fillStyle = '#6b7280'; g2.font = '600 19px Baloo'; g2.fillText('Swapnil Agrawal (BDS intern)', cx + 34, cy + 160); g2.restore(); }
+  // subtitles
+  { const vs = S.t + S.off; const parts = SUB[i].split('|'); const tot = parts.reduce((a, p) => a + p.length, 0); let acc2 = vs, cur = null;
+    for (const p of parts) { const d = p.length / tot * S.vo; if (t >= acc2 && t < acc2 + d + .25) cur = { p, a: acc2, b: acc2 + d }; acc2 += d; }
+    if (cur && t < vs + S.vo + .4) { const a = clamp((t - cur.a) / .2) * clamp((cur.b + .25 - t) / .2 + (cur.b > vs + S.vo - .1 ? 1 : 0)); const lines = wrapLines(cur.p, 960, '600 25px Baloo');
+      g2.save(); g2.globalAlpha = clamp(a); const lh = 34, bh = lines.length * lh + 22; const by = H - 40 - bh; let mw = 0; lines.forEach(l => mw = Math.max(mw, g2.measureText(l).width));
+      g2.fillStyle = 'rgba(15,22,35,.62)'; rr(g2, W / 2 - mw / 2 - 22, by, mw + 44, bh, 16); g2.fill(); g2.fillStyle = '#fff'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; lines.forEach((l, k) => g2.fillText(l, W / 2, by + 11 + lh / 2 + k * lh)); g2.restore(); } }
+  const fd = clamp(1 - t / .7) + clamp((t - (DURATION - 1.2)) / 1.2); if (fd > 0) { g2.fillStyle = `rgba(8,12,20,${clamp(fd)})`; g2.fillRect(0, 0, W, H); }
+};
+window.grab = (t, q = .93) => { window.renderAt(t); return out.toDataURL('image/jpeg', q); };
+window.grab3d = (t) => { window.renderAt(t); return renderer.domElement.toDataURL('image/png'); };
+window.READY = true;
+</script></body></html>
