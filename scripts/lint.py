@@ -10,7 +10,7 @@ P = json.load(open(os.path.join(d, 'project.json'))); tp = os.path.join(d, 'timi
 T = json.load(open(tp)) if os.path.exists(tp) else None
 E, W = [], []
 S = P.get('scenes', []); genre = (P.get('recipe') or P.get('genre') or '').lower()
-if T:
+if T and T.get('scenes'):
     s0 = T['scenes'][0]
     if s0['off'] > 1.0: W.append(f"hook: first VO starts at {s0['off']} s; set intro_lead <= 0.3 so the hook lands in the first second")
     if s0['d'] > 10: W.append(f"hook: first scene is {s0['d']} s; a hook should land and turn within 10 s")
