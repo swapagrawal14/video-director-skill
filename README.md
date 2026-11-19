@@ -50,6 +50,21 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 
 ---
 
+## 🕺 3D characters that move (new)
+
+<p align="center"><img src="docs/img/character-rig.gif" width="260" alt="Two 3D toon characters: walk in, wave, point, think, jump, shrug, laugh, lip-synced"></p>
+
+`template/character3d.js` gives every video real character acting, built only from three.js primitives (no SVG, no sprites). The motion system is ported from the Rigpop family ([rigpop-motion](https://github.com/swapagrawal14/rigpop-motion), [rigpop-agents](https://github.com/swapagrawal14/rigpop-agents)) and rebuilt for 3D:
+
+- **Always alive:** breathing, weight-shift sway, head drift, blinks, eye saccades
+- **Locomotion:** walk, sneak and run between named marks
+- **13 clips** with anticipation and overshoot: wave, point, thumbs, nod, shake, laugh, shrug, think, shock, cower, bow, sip, jump
+- **Faces:** 11 expressions plus visemes (rest, M, A, E, O) from the VO via `scripts/mouth.py`
+- **Stage directions:** `{at: "namaste", do: "wave"}`, plus auto-gestures on English and Hindi keywords
+- **Look-at and two-bone IK** for reaching
+
+Docs: [docs/CHARACTERS.md](docs/CHARACTERS.md) · Demo: [examples/character-demo](examples/character-demo)
+
 ## ⚡ Use it in 10 seconds
 
 Paste this into your agent:
