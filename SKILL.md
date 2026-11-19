@@ -13,6 +13,7 @@ Proven on real projects (examples/braces-tutorial: a 4:40 Pixar-style 3D dental 
 ---
 
 ## 0. Golden rules (read first)
+- **STRICT: no SVG, ever.** No .svg files, no inline <svg>, no SVG-drawn or flat vector-doodle characters, icons or backgrounds. Characters are the creator's own painted raster art rigged on the motion system, or proper 3D. lint.py fails the build on any SVG.
 
 1. **Picture is a pure function of time.** Everything on screen is computed from `t` inside `window.renderAt(t)`. No `requestAnimationFrame`, no `Date.now()`, no `Math.random()` at render time (use the seeded `rnd()` at build time only). This is what makes frame-perfect offline rendering possible. Full render contract + `timeshim` for custom scenes: `docs/CRAFT.md` §1.
 2. **Audio drives timing.** Write the script, generate VO, *then* derive scene lengths from VO durations (`build_timing.py`). Picture and audio read the same `timing.json`, so they can never drift.

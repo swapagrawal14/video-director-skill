@@ -38,6 +38,16 @@ if 'horror' in genre:
     if not any('sting' in x.get('file', '') for x in P.get('sfx', [])): W.append('horror: no stinger in sfx; run scripts/sfx_horror.sh')
 if any(k in genre for k in ('promo', 'product')) and not any(k in last for k in ('link', 'download', 'try', 'buy', 'visit', 'cta')):
     W.append('promo: last scene needs a clear call to action')
+# STRICT no-SVG rule: no .svg files and no inline <svg> / SVG data URIs anywhere in the project
+for _r, _ds, _fs in os.walk(d):
+    if 'node_modules' in _r: continue
+    for _f in _fs:
+        _p = os.path.join(_r, _f)
+        if _f.lower().endswith('.svg'): E.append(f'SVG file not allowed: {os.path.relpath(_p, d)}')
+        elif _f.lower().endswith(('.html', '.js', '.mjs', '.css', '.json')):
+            try: _t = open(_p, encoding='utf-8', errors='ignore').read()
+            except Exception: continue
+            if re.search(r'<svg[\s>]|image/svg\+xml|SVGLoader|createElementNS\([^)]*svg', _t, re.I): E.append(f'SVG usage not allowed in {os.path.relpath(_p, d)}')
 if asjson: print(json.dumps({'errors': E, 'warnings': W}, indent=1))
 else:
     for x in E: print('ERROR', x)
