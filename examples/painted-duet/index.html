@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><title>चाय में नमक</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body>
+<!-- Painted pose-pack duet. Deterministic: window.renderAt(t) is a pure function of t. Raster art only, no SVG. -->
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { loadCast, makeActor, drawActor, speechTrack, paintedSet } from './posepack3d.js';
+const W = innerWidth, H = innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.outputColorSpace = THREE.SRGBColorSpace; document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30, W / H, .1, 50); cam.position.set(0, .95, 5);
+const TL = await (await fetch('timeline.json')).json();
+const setTex = await new THREE.TextureLoader().loadAsync('set-aangan.png');
+const set = paintedSet(setTex, cam, -3.2, 1.25, 1.2); scene.add(set);
+const SH = makeActor(await loadCast('cast/sharmaji', ['idle', 'talk', 'point', 'listen', 'think', 'laugh']), { height: 1.62, home: 'idle', tint: '#fff4e6' });
+const KA = makeActor(await loadCast('cast/kaushalya', ['idle', 'talk', 'point', 'listen', 'laugh']), { height: 1.5, home: 'idle', tint: '#fff4e6' });
+scene.add(SH.group, KA.group);
+const L = TL.lines;
+const dirSH = { x: -.40, z: 0, seed: 3, look: 1, speech: speechTrack(TL.mouth.sharmaji, TL.fps),
+  acts: [{ t: 0, pose: 'idle' }, { t: L[0].t1 + .05, pose: 'listen' }, { t: L[2].t1 + .1, pose: 'think' }, { t: L[3].t0, pose: 'listen' }, { t: L[3].t1 + .15, pose: 'laugh' }],
+  rotations: [{ t0: L[0].t0 - .1, t1: L[0].t1 + .05, poses: ['talk', 'point', 'talk'], hold: 1.25 }, { t0: L[2].t0 - .1, t1: L[2].t1 + .1, poses: ['point', 'talk'], hold: 1.2 }] };
+const dirKA = { x: .43, z: .12, seed: 7, flip: true, look: 1, speech: speechTrack(TL.mouth.kaushalya, TL.fps),
+  acts: [{ t: 0, pose: 'idle' }, { t: L[0].t0 + .4, pose: 'listen' }, { t: L[1].t1 + .05, pose: 'listen' }, { t: L[3].t1 + .1, pose: 'laugh' }],
+  rotations: [{ t0: L[1].t0 - .1, t1: L[1].t1 + .05, poses: ['talk', 'point'], hold: 1.5 }, { t0: L[3].t0 - .1, t1: L[3].t1 + .1, poses: ['talk', 'point', 'talk'], hold: 1.2 }] };
+// camera: wide two-shot pushing in, hard cut to a medium on her punchline, cut back wide for the laugh
+function camAt(t) {
+  if (t >= L[3].t0 - .1 && t < L[3].t1 + .1) { const k = (t - L[3].t0) / 3.5; return [.34 + k * .03, 1.12, 3.7 - k * .25, .34, 1.02]; }
+  const k = Math.min(1, t / TL.duration); return [Math.sin(t * .2) * .05, .95, 5 - k * .6, 0, .88];
+}
+window.DURATION = TL.duration;
+window.renderAt = (t) => {
+  drawActor(SH, t, dirSH); drawActor(KA, t, dirKA);
+  const [x, y, z, lx, ly] = camAt(t); cam.position.set(x, y, z); cam.lookAt(lx, ly, 0);
+  set.position.x = x * .35;                                             // parallax: backdrop drifts less than the stage
+  renderer.render(scene, cam);
+};
+window.grab = (t, q = .93) => { window.renderAt(t); return renderer.domElement.toDataURL('image/jpeg', q); };
+window.renderAt(0); window.READY = true;
+</script></body></html>
