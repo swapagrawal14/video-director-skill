@@ -52,11 +52,11 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 
 ## 🎭 Painted characters that act (new)
 
-<p align="center"><img src="docs/img/painted-duet.gif" width="260" alt="चाय में नमक: Sharmaji and Kaushalya, painted pose packs, lip-synced Hindi dialogue in a painted aangan"></p>
+`template/headrig3d.js` (default) and `template/posepack3d.js` bring the [Rigpop Motion](https://github.com/swapagrawal14/rigpop-motion) method into the three.js engine: **pose first, motion second**.
 
-`template/posepack3d.js` brings the [Rigpop Motion](https://github.com/swapagrawal14/rigpop-motion) method into the three.js engine: **pose first, motion second**.
-
-- Characters are **painted pose packs** (PNG), never vector or primitive dolls. Every gesture is a drawn pose, switched on a hard cut.
+- Characters are **painted cutout rigs** (PNG): headless painted body poses + ONE shared painted head, so expressions never change by themselves. Never vector or primitive dolls.
+- **Directed expressions:** brows, eyes, mouth and head tilt are keyed in time; lip-sync visemes are smoothed and held ≥ 3 frames
+- **Motion QA:** `scripts/motion_qa.py` makes consecutive-frame strips that must be checked before delivery
 - **Always alive on top of the pose:** breathing, sway, settle after each cut, blinks, eye darts toward the other speaker
 - **Lip-sync patches** (rest, M, A, E, O) driven by the VO through `scripts/mouth.py`
 - **Speaking rotations** (talk, point, talk) and pinned listen, think and laugh poses, all directed in time

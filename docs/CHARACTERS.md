@@ -1,4 +1,19 @@
-# Characters: painted pose packs (the Rigpop Motion way)
+# Characters: painted cutout rigs (the Rigpop Motion way)
+
+## Lessons that cost a rejected video (read first)
+
+1. **Expression must never change by itself.** Pose packs where every drawing has its own face make each
+   cut swap the expression at random. Default to `template/headrig3d.js`: headless painted body poses
+   plus ONE painted head per character, with mouth, eye and brow sprites painted on that head. Every
+   expression change is a directed key (`brows`, `mouth`, `eyes`, `tilt`).
+2. **No generic pasted lips.** A mouth sprite must be painted for that exact head (an image edit of
+   `head.png`), never a stock shape pasted on.
+3. **Calm beats busy.** Hold one body pose per beat (1.5 s or more). Never cycle drawings inside a line.
+   Remove wobble before adding motion.
+4. **Watch it before shipping.** Run `scripts/motion_qa.py` on the render and look at the strips. A contact
+   sheet of single frames hides every one of these problems.
+
+Use `posepack3d.js` (below) only for packs whose drawings share one face.
 
 `template/posepack3d.js` puts painted characters into the three.js engine using the pose-to-pose method from
 [rigpop-motion](https://github.com/swapagrawal14/rigpop-motion) by Swapnil Agrawal (BDS intern).
