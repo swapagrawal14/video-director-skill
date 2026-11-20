@@ -143,3 +143,10 @@ python3 scripts/qa.py Graded.mp4 projects/<slug>/captions.ass                   
 - `template/headrig3d.js` — DEFAULT for characters: headless painted body poses + one shared painted head (directed brows/eyes/mouth, smoothed lip-sync, eased tilt/nods). Before delivery run `scripts/motion_qa.py` and look at the strips; expression must never change on its own.
 - `template/posepack3d.js` — painted characters the Rigpop Motion way: raster pose packs switched on hard cuts, blink/eye-dart/lip-sync face patches, breath and settle. Never primitive-shape or vector characters. Reference: `docs/CHARACTERS.md`. Demo: `examples/painted-duet/`.
 - `examples/braces-tutorial/` — a complete, real 21-scene production to learn from (models, tools, per-scene FX, labels).
+
+
+## Choosing an engine
+- three.js engine (`template/`): narrated explainers, horror shorts, painted characters with `headrig3d.js`.
+- `motion2d/`: object-action motion graphics (claymation, desi illustration, paper cut-out, 3D toy). Read docs/MOTION2D.md.
+- `vidliboom/`: a dialogue cartoon episode straight from a script.md (`python3 -m vidliboom script.md -o out.mp4 [--voice] [--format vertical]`). Read docs/EPISODE_SCRIPT.md.
+All engines: raster art only, never SVG; run scripts/motion_qa.py on the output before delivering.

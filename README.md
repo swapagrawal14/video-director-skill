@@ -82,6 +82,17 @@ Try: *"a 9:16 Hindi horror short about a hostel lift that stops at a floor that 
 
 ---
 
+## 🧩 Two more engines, merged in (new)
+
+| Engine | Use it for | Run |
+|---|---|---|
+| `motion2d/` (from vid-shark) | Motion graphics where objects do the action: pours, wipes, drops, launches. Procedural SFX on every action, VO-led mix, chunked parallel render | `python3 motion2d/examples/chai/render.py` |
+| `vidliboom/` (from vid-liboom) | One script in, a whole cartoon episode out: scene planner, pose-pack characters, shader skies, music, subtitles | `python3 -m vidliboom examples/episode/bablu_mausam.md -o episode.mp4 --format vertical` |
+
+Docs: [docs/MOTION2D.md](docs/MOTION2D.md) · [docs/EPISODE_SCRIPT.md](docs/EPISODE_SCRIPT.md). Raster art only; the no-SVG rule applies to every engine.
+
+---
+
 ## ✨ What makes the videos good
 
 | | |

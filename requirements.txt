@@ -6,3 +6,4 @@ edge-tts>=6.1
 faster-whisper>=1.0
 librosa>=0.10
 # offline TTS (optional, pick one): kokoro soundfile  |  piper-tts
+opencv-python-headless
