@@ -7,3 +7,6 @@ shots/
 clean_*.png
 __pycache__/
 .env
+examples/*/cast2/*/raw/
+examples/*/cast2/*/_*
+examples/*/cast2/*/head_src.png

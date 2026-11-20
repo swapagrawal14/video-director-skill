@@ -1,0 +1,162 @@
+{
+  "bodies": {
+    "idle": {
+      "file": "body_idle.png",
+      "w": 273,
+      "h": 539,
+      "neck": [
+        130.1,
+        17.8
+      ],
+      "foot": [
+        158.0,
+        539
+      ]
+    },
+    "talk": {
+      "file": "body_talk.png",
+      "w": 340,
+      "h": 539,
+      "neck": [
+        130.1,
+        17.8
+      ],
+      "foot": [
+        158.0,
+        539
+      ]
+    },
+    "point": {
+      "file": "body_point.png",
+      "w": 271,
+      "h": 540,
+      "neck": [
+        94.1,
+        18.8
+      ],
+      "foot": [
+        122.0,
+        540
+      ]
+    },
+    "outraged": {
+      "file": "body_outraged.png",
+      "w": 383,
+      "h": 554,
+      "neck": [
+        180.1,
+        32.8
+      ],
+      "foot": [
+        208.0,
+        554
+      ]
+    },
+    "think": {
+      "file": "body_think.png",
+      "w": 231,
+      "h": 551,
+      "neck": [
+        96.1,
+        29.8
+      ],
+      "foot": [
+        124.0,
+        551
+      ]
+    },
+    "laugh": {
+      "file": "body_laugh.png",
+      "w": 272,
+      "h": 539,
+      "neck": [
+        130.1,
+        17.8
+      ],
+      "foot": [
+        158.0,
+        539
+      ]
+    }
+  },
+  "head": {
+    "file": "head.png",
+    "w": 457,
+    "h": 482,
+    "neck": [
+      208.1,
+      467.4
+    ],
+    "sprites": {
+      "mouth.rest": {
+        "file": "mouth_rest.png",
+        "x": 271,
+        "y": 340,
+        "w": 79,
+        "h": 49
+      },
+      "mouth.M": {
+        "file": "mouth_M.png",
+        "x": 239,
+        "y": 327,
+        "w": 130,
+        "h": 67
+      },
+      "mouth.A": {
+        "file": "mouth_A.png",
+        "x": 235,
+        "y": 323,
+        "w": 124,
+        "h": 111
+      },
+      "mouth.E": {
+        "file": "mouth_E.png",
+        "x": 234,
+        "y": 328,
+        "w": 129,
+        "h": 104
+      },
+      "mouth.O": {
+        "file": "mouth_O.png",
+        "x": 280,
+        "y": 337,
+        "w": 56,
+        "h": 77
+      },
+      "mouth.laugh": {
+        "file": "mouth_laugh.png",
+        "x": 209,
+        "y": 314,
+        "w": 178,
+        "h": 113
+      },
+      "eyes.closed": {
+        "file": "eyes_closed.png",
+        "x": 181,
+        "y": 198,
+        "w": 227,
+        "h": 64
+      },
+      "brows.angry": {
+        "file": "brows_angry.png",
+        "x": 154,
+        "y": 114,
+        "w": 267,
+        "h": 76
+      }
+    }
+  },
+  "head_scale": 0.37222,
+  "meta": {
+    "character": "Dadaji",
+    "layer_order": [
+      "head",
+      "head sprites",
+      "body (drawn ON TOP of head so the collar covers the neck stub)"
+    ],
+    "compose": "place head scaled by head_scale so head.neck*head_scale lands on body.neck; draw body after head",
+    "missing": [
+      "brows.up"
+    ]
+  }
+}

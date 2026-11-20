@@ -4,7 +4,8 @@
 <script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'three';
-import { loadCast, makeActor, drawActor, speechTrack, paintedSet } from './posepack3d.js';
+import { loadRig, makeRigActor, drawRigActor, speechTrack } from './headrig3d.js';
+import { paintedSet } from './posepack3d.js';
 const W = innerWidth, H = innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.outputColorSpace = THREE.SRGBColorSpace; document.body.appendChild(renderer.domElement);
@@ -13,16 +14,23 @@ const cam = new THREE.PerspectiveCamera(30, W / H, .1, 50); cam.position.set(0, 
 const TL = await (await fetch('timeline.json')).json();
 const setTex = await new THREE.TextureLoader().loadAsync('set-aangan.png');
 const set = paintedSet(setTex, cam, -3.2, 1.25, 1.2); scene.add(set);
-const SH = makeActor(await loadCast('cast/sharmaji', ['idle', 'talk', 'point', 'listen', 'think', 'laugh']), { height: 1.62, home: 'idle', tint: '#fff4e6' });
-const KA = makeActor(await loadCast('cast/kaushalya', ['idle', 'talk', 'point', 'listen', 'laugh']), { height: 1.5, home: 'idle', tint: '#fff4e6' });
-scene.add(SH.group, KA.group);
+const DJ = makeRigActor(await loadRig('cast2/dadaji'), { height: 1.62, tint: '#fff4e6' });
+const DD = makeRigActor(await loadRig('cast2/dadi'), { height: 1.5, tint: '#fff4e6' });
+scene.add(DJ.group, DD.group);
 const L = TL.lines;
-const dirSH = { x: -.40, z: 0, seed: 3, look: 1, speech: speechTrack(TL.mouth.sharmaji, TL.fps),
-  acts: [{ t: 0, pose: 'idle' }, { t: L[0].t1 + .05, pose: 'listen' }, { t: L[2].t1 + .1, pose: 'think' }, { t: L[3].t0, pose: 'listen' }, { t: L[3].t1 + .15, pose: 'laugh' }],
-  rotations: [{ t0: L[0].t0 - .1, t1: L[0].t1 + .05, poses: ['talk', 'point', 'talk'], hold: 1.25 }, { t0: L[2].t0 - .1, t1: L[2].t1 + .1, poses: ['point', 'talk'], hold: 1.2 }] };
-const dirKA = { x: .43, z: .12, seed: 7, flip: true, look: 1, speech: speechTrack(TL.mouth.kaushalya, TL.fps),
-  acts: [{ t: 0, pose: 'idle' }, { t: L[0].t0 + .4, pose: 'listen' }, { t: L[1].t1 + .05, pose: 'listen' }, { t: L[3].t1 + .1, pose: 'laugh' }],
-  rotations: [{ t0: L[1].t0 - .1, t1: L[1].t1 + .05, poses: ['talk', 'point'], hold: 1.5 }, { t0: L[3].t0 - .1, t1: L[3].t1 + .1, poses: ['talk', 'point', 'talk'], hold: 1.2 }] };
+// One shared head each: every expression change below is a directed key, nothing changes by itself.
+const dirDJ = { x: -.40, z: 0, seed: 3, speech: speechTrack(TL.mouth.sharmaji, TL.fps),
+  body:  [{ t: 0, v: 'idle' }, { t: L[0].t0 - .1, v: 'outraged' }, { t: L[0].t0 + 2.3, v: 'point' }, { t: L[1].t0 + .4, v: 'idle' }, { t: L[2].t0 - .1, v: 'talk' }, { t: L[2].t1 + .2, v: 'think' }, { t: L[3].t1 + .5, v: 'laugh' }],
+  brows: [{ t: 0, v: null }, { t: L[0].t0 - .1, v: 'angry' }, { t: L[1].t0 + 1.2, v: null }, { t: L[2].t0 - .1, v: 'angry' }, { t: L[3].t0 + 2.0, v: null }],
+  mouth: [{ t: 0, v: null }, { t: L[3].t1 + .5, v: 'laugh' }],
+  eyes:  [{ t: 0, v: null }, { t: L[3].t1 + .7, v: 'closed' }],
+  tilt:  [{ t: 0, v: 0 }, { t: L[0].t0 + .2, v: .04 }, { t: L[1].t0 + .2, v: -.03 }, { t: L[2].t0, v: .05 }, { t: L[2].t1 + .2, v: -.02 }, { t: L[3].t1 + .5, v: -.06 }] };
+const dirDD = { x: .43, z: .12, seed: 7, speech: speechTrack(TL.mouth.kaushalya, TL.fps),
+  body:  [{ t: 0, v: 'idle' }, { t: L[0].t0 + 1.2, v: 'sheepish' }, { t: L[1].t0 - .1, v: 'talk' }, { t: L[1].t1 + .2, v: 'arms_crossed' }, { t: L[3].t0 - .1, v: 'point' }, { t: L[3].t0 + 1.9, v: 'talk' }, { t: L[3].t1 + .2, v: 'laugh' }],
+  brows: [{ t: 0, v: null }, { t: L[0].t0 + .5, v: 'up' }, { t: L[1].t1 + .2, v: null }],
+  mouth: [{ t: 0, v: null }, { t: L[3].t1 + .2, v: 'laugh' }],
+  eyes:  [{ t: 0, v: null }, { t: L[3].t1 + .35, v: 'closed' }],
+  tilt:  [{ t: 0, v: 0 }, { t: L[0].t0 + .5, v: .04 }, { t: L[1].t0, v: -.03 }, { t: L[1].t1 + .2, v: .05 }, { t: L[3].t0, v: -.04 }, { t: L[3].t1 + .2, v: .07 }] };
 // camera: wide two-shot pushing in, hard cut to a medium on her punchline, cut back wide for the laugh
 function camAt(t) {
   if (t >= L[3].t0 - .1 && t < L[3].t1 + .1) { const k = (t - L[3].t0) / 3.5; return [.34 + k * .03, 1.12, 3.7 - k * .25, .34, 1.02]; }
@@ -30,7 +38,7 @@ function camAt(t) {
 }
 window.DURATION = TL.duration;
 window.renderAt = (t) => {
-  drawActor(SH, t, dirSH); drawActor(KA, t, dirKA);
+  drawRigActor(DJ, t, dirDJ); drawRigActor(DD, t, dirDD);
   const [x, y, z, lx, ly] = camAt(t); cam.position.set(x, y, z); cam.lookAt(lx, ly, 0);
   set.position.x = x * .35;                                             // parallax: backdrop drifts less than the stage
   renderer.render(scene, cam);

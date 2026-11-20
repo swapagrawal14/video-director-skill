@@ -1,0 +1,167 @@
+{
+  "character": "Dadi (Kaushalya)",
+  "facing": "left (3/4)",
+  "head": {
+    "file": "head.png",
+    "w": 388,
+    "h": 414,
+    "neck": [
+      70.0,
+      412.0
+    ],
+    "sprites": {
+      "mouth.rest": {
+        "file": "sprite_mouth_rest.png",
+        "x": 48,
+        "y": 232,
+        "w": 110,
+        "h": 56
+      },
+      "mouth.M": {
+        "file": "sprite_mouth_M.png",
+        "x": 56,
+        "y": 236,
+        "w": 88,
+        "h": 54
+      },
+      "mouth.A": {
+        "file": "sprite_mouth_A.png",
+        "x": 60,
+        "y": 232,
+        "w": 86,
+        "h": 86
+      },
+      "mouth.E": {
+        "file": "sprite_mouth_E.png",
+        "x": 49,
+        "y": 233,
+        "w": 111,
+        "h": 60
+      },
+      "mouth.O": {
+        "file": "sprite_mouth_O.png",
+        "x": 68,
+        "y": 236,
+        "w": 62,
+        "h": 64
+      },
+      "mouth.laugh": {
+        "file": "sprite_mouth_laugh.png",
+        "x": 31,
+        "y": 216,
+        "w": 149,
+        "h": 92
+      },
+      "eyes.closed": {
+        "file": "sprite_eyes_closed.png",
+        "x": 18,
+        "y": 158,
+        "w": 174,
+        "h": 51
+      },
+      "brows.angry": {
+        "file": "sprite_brows_angry.png",
+        "x": 20,
+        "y": 124,
+        "w": 176,
+        "h": 60
+      },
+      "brows.up": {
+        "file": "sprite_brows_up.png",
+        "x": 18,
+        "y": 106,
+        "w": 178,
+        "h": 55
+      }
+    }
+  },
+  "bodies": {
+    "idle": {
+      "file": "body_idle.png",
+      "w": 298,
+      "h": 525,
+      "neck": [
+        91.3,
+        45.4
+      ],
+      "foot": [
+        123.6,
+        525
+      ],
+      "head_fit_scale": 1.0
+    },
+    "talk": {
+      "file": "body_talk.png",
+      "w": 365,
+      "h": 525,
+      "neck": [
+        159.0,
+        45.4
+      ],
+      "foot": [
+        191.3,
+        525
+      ],
+      "head_fit_scale": 1.0
+    },
+    "point": {
+      "file": "body_point.png",
+      "w": 371,
+      "h": 525,
+      "neck": [
+        164.6,
+        45.4
+      ],
+      "foot": [
+        196.9,
+        525
+      ],
+      "head_fit_scale": 1.0
+    },
+    "sheepish": {
+      "file": "body_sheepish.png",
+      "w": 333,
+      "h": 677,
+      "neck": [
+        126.3,
+        196.5
+      ],
+      "foot": [
+        158.6,
+        677
+      ],
+      "head_fit_scale": 1.0
+    },
+    "arms_crossed": {
+      "file": "body_arms_crossed.png",
+      "w": 300,
+      "h": 525,
+      "neck": [
+        93.5,
+        45.4
+      ],
+      "foot": [
+        125.8,
+        525
+      ],
+      "head_fit_scale": 1.0
+    },
+    "laugh": {
+      "file": "body_laugh.png",
+      "w": 311,
+      "h": 526,
+      "neck": [
+        104.6,
+        46.0
+      ],
+      "foot": [
+        136.9,
+        526
+      ],
+      "head_fit_scale": 1.0
+    }
+  },
+  "head_scale": 0.4888,
+  "head_layer": "behind_body",
+  "notes": "Scale head (and sprites) by head_scale; place so head.neck*head_scale lands on body.neck. Draw order: head, then sprites at (x,y) in head px, then BODY ON TOP (the saree neckline hides the base of the neck). head_fit_scale per body = measured head size in that pose vs median (info only)."
+}

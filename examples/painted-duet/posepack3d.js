@@ -68,8 +68,8 @@ export function poseAt(A, t, dir) {
   for (const r of dir.rotations || []) if (t >= r.t0 && t < r.t1) {
     const hold = r.hold || 1.7, n = Math.floor((t - r.t0) / hold);
     pose = r.poses[n % r.poses.length]; cutT = r.t0 + n * hold;
-    const pk = A.cast.packs[pose]; const nk = pk ? pk.keys.length : 1;       // multi-key pack cycles inside its own turn
-    if (nk > 1) { const kh = hold / nk, j = Math.floor((t - cutT) / kh); key = j % nk; cutT += j * kh; }
+    const keysR = r.keys || [];                                                // optional key per turn, e.g. talk key0 then key1
+    key = keysR.length ? keysR[n % keysR.length] : 0;
   }
   if (!A.cast.packs[pose]) pose = Object.keys(A.cast.packs)[0];
   return { pose, key: Math.min(key, A.cast.packs[pose].keys.length - 1), cutT };
@@ -82,32 +82,44 @@ export function drawActor(A, t, dir) {
   const x0 = Math.round(A.ox - K.foot.x), y0 = Math.round(A.oy - K.foot.y);
   g.clearRect(0, 0, A.canvas.width, A.canvas.height);
   g.drawImage(K.img, x0, y0);
-  // eyes: blink on a seeded schedule, otherwise darts (pupil sprite slides 1-2 px over flat sclera)
+  // eyes: blink on a seeded schedule; slow, small eye darts (one shift every ~2.5 s, never jittery)
   const slot = Math.floor((t + seed * 1.7) / 3.3), bt = (t + seed * 1.7) - slot * 3.3 - hash(slot + seed) * 2.6;
   const blinking = F.blink && bt > 0 && bt < .12;
   if (blinking) g.drawImage(F.blink.img, x0 + F.blink.x, y0 + F.blink.y, F.blink.w, F.blink.h);
-  else if (F.eyes?.img && F.eyes.pupil?.img && F.blink) {
-    const ds = Math.floor(t * .9 + seed), dx = Math.round((hash(ds) - .5) * 3 + (dir.look || 0) * 1.5), dy = Math.round((hash(ds + 5) - .5) * 1.5);
-    g.drawImage(F.eyes.img, x0 + F.blink.x, y0 + F.blink.y);
-    g.drawImage(F.eyes.pupil.img, x0 + F.blink.x + dx, y0 + F.blink.y + dy);
+  else if (dir.darts && F.eyes?.img && F.eyes.pupil?.img && F.blink) {
+    const ds = Math.floor(t / 2.5 + seed), dx = Math.round((hash(ds) - .5) * 2 + (dir.look || 0)), dy = 0;
+    if (dx) { g.drawImage(F.eyes.img, x0 + F.blink.x, y0 + F.blink.y); g.drawImage(F.eyes.pupil.img, x0 + F.blink.x + dx, y0 + F.blink.y + dy); }
   }
-  // mouth: the patch covers the drawn mouth exactly (rect from `rigpop-motion faces`)
-  const sp = dir.speech ? dir.speech(t) : { lv: 0, shape: 'rest' };
-  if (F.mouth?.imgs) { const s = sp.lv > .05 ? sp.shape : 'rest'; const m = F.mouth.imgs[s] || F.mouth.imgs.A || F.mouth.imgs.rest; g.drawImage(m, x0 + F.mouth.x, y0 + F.mouth.y, F.mouth.w, F.mouth.h); }
+  // mouth = the DRAWING'S OWN mouth (no pasted generic lips): on a key whose drawn mouth is open, the jaw
+  // closes and opens by squashing that painted mouth from its upper lip, over the sampled skin.
+  const sp = dir.speech ? dir.speech(t) : { lv: 0, open: 0 };
+  const M = F.mouth;
+  if (M && (dir.jaw || ['talk']).includes(pose)) {
+    if (!K.skin) { const c = document.createElement('canvas'); c.width = K.w; c.height = K.h; const cg = c.getContext('2d'); cg.drawImage(K.img, 0, 0);
+      const px = cg.getImageData(Math.round(M.x + M.w / 2), Math.min(K.h - 1, M.y + M.h + 4), 1, 1).data; K.skin = `rgb(${px[0]},${px[1]},${px[2]})`; }
+    const open = sp.open || 0, sy = .18 + .92 * open, pad = 2;
+    g.fillStyle = K.skin; g.beginPath(); g.ellipse(x0 + M.x + M.w / 2, y0 + M.y + M.h / 2, M.w / 2 + pad, M.h / 2 + pad, 0, 0, Math.PI * 2); g.fill();
+    g.drawImage(K.img, M.x - pad, M.y - pad, M.w + pad * 2, M.h + pad * 2, x0 + M.x - pad, y0 + M.y - pad, M.w + pad * 2, (M.h + pad * 2) * sy);
+  }
   A.tex.needsUpdate = true;
-  // secondary motion as small offsets on the current pose (never limb swings)
-  const k = t - cutT, settle = k < .45 ? Math.exp(-k * 9) * Math.cos(k * 26) : 0;      // overshoot + settle after the cut
-  const br = Math.sin(t * Math.PI * 2 * .26 + seed);
-  const talk = sp.lv || 0;
-  A.mesh.scale.set((dir.flip ? -1 : 1) * (1 + br * .004 - settle * .025), 1 + br * .009 + settle * .035 + talk * .006, 1);
-  A.mesh.rotation.z = noise1(t * .35 + seed * 3) * .012 + Math.sin(t * 6.8) * talk * .006;
-  A.mesh.position.y = talk * .008;
+  // secondary motion: tiny offsets only. One soft ease after a cut (no wobble), breath, slow sway.
+  const k = t - cutT, settle = k < .5 ? Math.exp(-k * 7) * (1 - Math.min(1, k * 2)) : 0;
+  const br = Math.sin(t * Math.PI * 2 * .22 + seed);
+  A.mesh.scale.set((dir.flip ? -1 : 1) * (1 + br * .003), 1 + br * .006 + settle * .015, 1);
+  A.mesh.rotation.z = noise1(t * .25 + seed * 3) * .006;
+  A.mesh.position.y = 0;
   A.group.position.set(dir.x || 0, 0, dir.z || 0);
   return { pose, key, blinking };
 }
 
 /** speech track from timeline.json mouth frames for one speaker */
-export const speechTrack = (frames, fps) => t => frames[Math.max(0, Math.min(frames.length - 1, Math.round(t * fps)))] || { lv: 0, shape: 'rest' };
+// smoothed: jaw open = mean level over ~5 frames with fast attack / slower release, so lips never flicker
+export function speechTrack(frames, fps) {
+  const n = frames.length, open = new Float32Array(n); let v = 0;
+  for (let i = 0; i < n; i++) { let a = 0; for (let j = -2; j <= 2; j++) a += (frames[Math.max(0, Math.min(n - 1, i + j))]?.lv || 0); a = clamp(a / 5 * 1.7);
+    v = a > v ? v + (a - v) * .7 : v + (a - v) * .35; open[i] = v; }
+  return t => { const i = Math.max(0, Math.min(n - 1, Math.round(t * fps))); return { lv: open[i] > .04 ? open[i] : 0, open: open[i] }; };
+}
 
 /** paintedSet(texture, camera, depth): a painted backdrop plane that fills the frame at its depth (+margin for camera moves) */
 export function paintedSet(tex, cam, z, cy, margin = 1.12) {
