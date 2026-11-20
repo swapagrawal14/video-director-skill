@@ -82,14 +82,17 @@ Try: *"a 9:16 Hindi horror short about a hostel lift that stops at a floor that 
 
 ---
 
-## 🧩 Two more engines, merged in (new)
+## 🧩 More engines, merged in (new)
 
 | Engine | Use it for | Run |
 |---|---|---|
 | `motion2d/` (from vid-shark) | Motion graphics where objects do the action: pours, wipes, drops, launches. Procedural SFX on every action, VO-led mix, chunked parallel render | `python3 motion2d/examples/chai/render.py` |
+| `handdrawn/` (swap-studio style packs) | Hand-drawn / whiteboard reels: pen draw-on of line art, line boil, write-on titles, marker swipes, karaoke captions, end cards, in 7 style packs. Raster only | `python3 handdrawn/examples/chai-doodle/render.py chalkboard out.mp4` |
 | `vidliboom/` (from vid-liboom) | One script in, a whole cartoon episode out: scene planner, pose-pack characters, shader skies, music, subtitles | `python3 -m vidliboom examples/episode/bablu_mausam.md -o episode.mp4 --format vertical` |
 
-Docs: [docs/MOTION2D.md](docs/MOTION2D.md) · [docs/EPISODE_SCRIPT.md](docs/EPISODE_SCRIPT.md). Raster art only; the no-SVG rule applies to every engine.
+<p align="center"><img src="docs/img/handdrawn.gif" alt="Hand-drawn engine demo, swap-edu pack" width="240"></p>
+
+Docs: [docs/HANDDRAWN.md](docs/HANDDRAWN.md) · [docs/MOTION2D.md](docs/MOTION2D.md) · [docs/EPISODE_SCRIPT.md](docs/EPISODE_SCRIPT.md). Raster art only; the no-SVG rule applies to every engine.
 
 ---
 
