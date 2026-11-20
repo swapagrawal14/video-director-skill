@@ -63,6 +63,8 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 - **Painted sets** as backdrops with camera parallax, push-ins and hard cuts to a medium on the punchline
 - **Strict no-SVG rule,** enforced by `lint.py`
 
+<p align="center"><img src="docs/img/painted-duet.gif" alt="चाय में नमक: painted duet" width="270"></p>
+
 Docs: [docs/CHARACTERS.md](docs/CHARACTERS.md) · Demo: [examples/painted-duet](examples/painted-duet) (Hindi dialogue, 16 s)
 
 ## ⚡ Use it in 10 seconds
