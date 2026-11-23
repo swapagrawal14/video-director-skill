@@ -17,9 +17,36 @@ When this skill is installed or first loaded, don't wait silently. Run `scripts/
 1. **What's the video about?** (or offer 3 ideas from `prompts/README.md` that fit what you know about them)
 2. **Format:** reel 9:16, YouTube 16:9 or square, and roughly how long?
 3. **Language and voice:** which language, their own cloned voice or a stock one?
-4. **Look:** a style from the engines (3D, whiteboard, claymation, paper cut-out, screencast, cartoon) or a reference video they like.
-5. **Credit:** the name or handle for the end card.
-Ask at most these, in one message, with a likely default for each so a one-word reply works. Then show stills before rendering.
+4. **Credit:** the name or handle for the end card, exactly as they want it.
+Ask at most these, in one message, with a likely default for each so a one-word reply works.
+
+## Every video: treatment menu BEFORE any asset (mandatory, even when the style is given)
+A style ("hand-drawn", "clay") is not a treatment. The same style can be a whiteboard overview, a hands-on demo
+or a story. Never pick the treatment silently. Once the topic is known, send ONE message with 3 numbered
+treatments that fit it (from `docs/INTAKE.md`), each one line: what happens on screen + engine + style, with
+your pick marked. If the user named a style, all 3 use that style. Example for a dental wire-bending topic:
+1. **Bench demo (pick):** the cast stays on screen, the wire is laid on it and bent step by step by the plier,
+   close-ups at each bend, host reacts and points. `motion2d/` in the requested style.
+2. **Host-led explainer:** the host walks through it with gestures, props pop in and act beside her.
+3. **Whiteboard overview:** pen draw-on diagrams and labels (`handdrawn/`). Only for concept overviews, never as
+   the default for a procedure.
+Then show a **storyboard sheet** (one still per scene, `shot.py` / `PREVIEW=`) to the user and get a yes before the
+full render. Looking at stills yourself is not approval.
+
+## Not a slideshow (hard gate, all engines)
+- **Objects perform the action the VO describes.** Every VO sentence = a verb on screen: the wire is placed, the
+  plier closes, the arrowhead forms, the cast tilts. A drawing that only appears (draw-on, fade, pop) while
+  the voice explains the action is a FAIL. Mute test: with sound off the video must still teach.
+- **Procedures are continuous.** Keep the work piece (cast, tooth, model) on screen across steps and build the
+  result on it step by step (reveal masks, a parametric raster wire path that bends over time, the tool on
+  a pivot path). Don't cut to unrelated standalone drawings per step.
+- **Characters ACT.** A host is a pose pack (talk, point, explain, hold the tool, thumbs-up, react), hard-cut on
+  VO beats, plus breath, blink and lip-sync. A single still with only a mouth patch is a FAIL; the host
+  changes pose at least every 3-4 s while on screen. Generate the poses from the master with the master as
+  first reference (`motion2d/posepack.py`, `docs/CHARACTERS.md`).
+- **A sound on every action** (pop, whoosh, click, wire twang, squish) via `motion2d/sfx.py`, VO-led mix.
+- **Camera lives:** slow push, stop-motion jitter or line boil; squash/stretch and overshoot on entrances.
+- Write the action list (t, verb, object, SFX) before coding, and check it against the storyboard.
 
 ## Unbounded by design
 This repo exists so that any agent handed its link can make **any kind of video**. The engines, templates, packs and examples are starting points, never the edge of what is allowed.
@@ -51,7 +78,7 @@ This repo exists so that any agent handed its link can make **any kind of video*
 Pin down only what changes the output:
 - **Topic + exact variant** (e.g. "Begg's wrap-around retainer", not "retainers").
 - **Audience + language** (students? patients? kids? English / Hindi / Hinglish?).
-- **Genre + length** (default: 3D explainer, 2.5–5 min, 1280x720 @ 24 fps).
+- **Genre + length** (default: 3D explainer, 2.5–5 min, 1280x720 @ 24 fps). The treatment comes from the menu above, never assumed.
 - **Credit line / branding** (name + role exactly as they want it).
 If the user says "decide yourself", decide and state your choices in one line.
 
@@ -158,7 +185,7 @@ python3 scripts/qa.py Graded.mp4 projects/<slug>/captions.ass                   
 - `template/index.html` — scene engine (edit `buildSubject` + `SCENE_FX`).
 - `template/project.json` — content/timing/theme schema with a working 5-scene demo.
 - `scripts/` — setup, new_project, tts_cartesia, tts_free, build_timing, lint, words_project, words_whisper, captions, shot, music, beats, sfx_horror, mix, loudnorm, render, render_all, timeshim.js, mux, chapters, make_lut, grade, export, qa, thumbgrab, thumb.
-- `docs/STYLES.md` — genre recipes. `docs/ENGINE.md` — project.json + engine reference. `docs/TROUBLESHOOTING.md`. `docs/CRAFT.md` — render contract, hook/retention, shot list, review loop, banned defaults, horror scare structure, beat cuts. `docs/AUDIO_CAPTIONS.md` — TTS engines, word timings, captions, SFX, mix. `docs/EXPORT_QA.md` — grade, platform presets, QA gate, packaging. `docs/CHARACTERS.md` — painted pose-pack characters (posepack3d.js), hard rules, lip-sync, directing.
+- `docs/INTAKE.md` — treatment menu to offer before any asset, action sheet, storyboard approval. `docs/STYLES.md` — genre recipes. `docs/ENGINE.md` — project.json + engine reference. `docs/TROUBLESHOOTING.md`. `docs/CRAFT.md` — render contract, hook/retention, shot list, review loop, banned defaults, horror scare structure, beat cuts. `docs/AUDIO_CAPTIONS.md` — TTS engines, word timings, captions, SFX, mix. `docs/EXPORT_QA.md` — grade, platform presets, QA gate, packaging. `docs/CHARACTERS.md` — painted pose-pack characters (posepack3d.js), hard rules, lip-sync, directing.
 - `template/headrig3d.js` — DEFAULT for characters: headless painted body poses + one shared painted head (directed brows/eyes/mouth, smoothed lip-sync, eased tilt/nods). Before delivery run `scripts/motion_qa.py` and look at the strips; expression must never change on its own.
 - `template/posepack3d.js` — painted characters the Rigpop Motion way: raster pose packs switched on hard cuts, blink/eye-dart/lip-sync face patches, breath and settle. Never primitive-shape or vector characters. Reference: `docs/CHARACTERS.md`. Demo: `examples/painted-duet/`.
 - `examples/braces-tutorial/` — a complete, real 21-scene production to learn from (models, tools, per-scene FX, labels).
@@ -166,8 +193,8 @@ python3 scripts/qa.py Graded.mp4 projects/<slug>/captions.ass                   
 
 ## Choosing an engine
 - three.js engine (`template/`): narrated explainers, horror shorts, painted characters with `headrig3d.js`.
-- `motion2d/`: object-action motion graphics (claymation, desi illustration, paper cut-out, 3D toy). Read docs/MOTION2D.md.
-- `handdrawn/`: hand-drawn / whiteboard reels in swap-studio style packs (pen draw-on, boil, write-on, marker swipe, karaoke, end card), plus a talking painted host (`handdrawn/examples/talking-explainer/`, diff-patch face rig). Read docs/HANDDRAWN.md.
+- `motion2d/`: object-action motion graphics in ANY raster style (claymation, desi illustration, paper cut-out, 3D toy, ink-and-marker hand-drawn). DEFAULT for tutorials and procedures in a 2D look, including "hand-drawn" ones: objects act, pose-pack characters, SFX. Read docs/MOTION2D.md.
+- `handdrawn/`: whiteboard / pen draw-on reels, only when the user picks a whiteboard treatment or for short concept overviews in swap-studio style packs (pen draw-on, boil, write-on, marker swipe, karaoke, end card), plus a talking painted host (`handdrawn/examples/talking-explainer/`, diff-patch face rig). Read docs/HANDDRAWN.md.
 - `screencast/`: tutorial reels with a real browser recording on a tilted card plus a gesturing painted host (`python3 -m screencast all <proj>`). Read docs/SCREENCAST.md. Its assets are a starter kit: generate new characters, poses, props, stickers, backgrounds and sounds for each video as it needs them (raster only). Add procedural SFX with `python3 -m screencast sfx <proj>`, and blur anything personal in a capture with `"blur"`.
 - `vidliboom/`: a dialogue cartoon episode straight from a script.md (`python3 -m vidliboom script.md -o out.mp4 [--voice] [--format vertical]`). Read docs/EPISODE_SCRIPT.md.
 All engines: raster art only, never SVG; run scripts/motion_qa.py on the output before delivering.
