@@ -12,6 +12,14 @@ Proven on real projects (examples/braces-tutorial: a 4:40 Pixar-style 3D dental 
 
 ---
 
+## Unbounded by design
+This repo exists so that any agent handed its link can make **any kind of video**. The engines, templates, packs and examples are starting points, never the edge of what is allowed.
+- **Route, then stretch.** Pick the closest engine (see *Choosing an engine*): 3D explainer or procedure -> `template/`; object motion graphics -> `motion2d/`; whiteboard or hand-drawn -> `handdrawn/`; app or website tutorial -> `screencast/`; dialogue cartoon -> `vidliboom/`. Then change whatever the video needs.
+- **Mix engines.** Render parts with different engines and cut them together with `scripts/mux.py` / ffmpeg (a screencast inside a hand-drawn explainer, a 3D shot inside a reel).
+- **No engine fits? Build one.** Keep only the contracts: picture is a pure function of `t`, VO drives timing, raster only, stills before render, `qa.py` before delivery. Everything else (layout, camera, characters, effects) is yours to write.
+- **Generate assets per video.** Characters, poses, props, backgrounds, stickers, fonts, music and SFX are created for each video's needs (image edits of one base drawing for characters, numpy or code for sound and texture). Shipped assets are a starter kit; reuse them only where they fit.
+- **Hard limits stay hard:** no SVG, no 3D-look vector doodles, original or licensed material only, facts verified, nothing personal published without the owner's consent.
+
 ## 0. Golden rules (read first)
 - **STRICT: no SVG, ever.** No .svg files, no inline <svg>, no SVG-drawn or flat vector-doodle characters, icons or backgrounds. Characters are the creator's own painted raster art rigged on the motion system, or proper 3D. lint.py fails the build on any SVG.
 
