@@ -20,7 +20,7 @@ import shutil
 import subprocess
 import warnings
 
-STEP_KEYS = ("goto", "wait", "scroll_to", "scroll", "click", "type", "hover")
+STEP_KEYS = ("goto", "wait", "scroll_to", "scroll", "click", "type", "hover", "press", "mark")
 SCROLL_SECONDS = 0.6
 NAV_TIMEOUT_MS = 30000
 SELECTOR_TIMEOUT_MS = 5000
@@ -51,6 +51,12 @@ def validate_steps(steps):
         elif k == "scroll":
             if not isinstance(v, (int, float)) or isinstance(v, bool):
                 raise ValueError(f"step {i}: scroll needs a pixel number")
+        elif k == "press":
+            if not isinstance(v, str) or not v:
+                raise ValueError(f"step {i}: press needs a key name (e.g. Enter)")
+        elif k == "mark":
+            if not isinstance(v, str) or not v:
+                raise ValueError(f"step {i}: mark needs a name")
         elif k == "type":
             if (not isinstance(v, (list, tuple)) or len(v) != 2
                     or not all(isinstance(x, str) for x in v) or not v[0]):
@@ -285,6 +291,23 @@ def capture(steps, out_dir, viewport=(720, 1280), fps=30):
                             pass
                     except Exception as e:
                         warnings.warn(f"click {val!r} failed: {e}")
+                    for _ in range(max(1, frames_for(POST_ACTION_SECONDS, fps))):
+                        rec.shot()
+
+                elif kind == "mark":          # zero-length: beat boundary for compose
+                    events.append(make_event(rec.t, "mark", name=val, frame=rec.n))
+
+                elif kind == "press":
+                    events.append(make_event(rec.t, "press", key=val))
+                    try:
+                        page.keyboard.press(val)
+                        try:
+                            page.wait_for_load_state("domcontentloaded", timeout=NAV_TIMEOUT_MS)
+                            page.wait_for_load_state("networkidle", timeout=5000)
+                        except Exception:
+                            pass
+                    except Exception as e:
+                        warnings.warn(f"press {val!r} failed: {e}")
                     for _ in range(max(1, frames_for(POST_ACTION_SECONDS, fps))):
                         rec.shot()
 
