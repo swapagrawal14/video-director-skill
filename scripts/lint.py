@@ -26,7 +26,7 @@ if T and T.get('scenes'):
     if s0['off'] > 1.0: W.append(f"hook: first VO starts at {s0['off']} s; set intro_lead <= 0.3 so the hook lands in the first second")
     if s0['d'] > 10: W.append(f"hook: first scene is {s0['d']} s; a hook should land and turn within 10 s")
 for i, s in enumerate(S):
-    ts = T['scenes'][i] if T else None; vo = s.get('vo', '') or ''
+    ts = T['scenes'][i] if T and i < len(T.get('scenes') or []) else None; vo = s.get('vo', '') or ''
     if ts:
         if ts['d'] > 25: W.append(f's{i:02d}: {ts["d"]} s long; split it (one idea per scene, 8-14 s sweet spot)')
         if ts['d'] < 2.5 and s.get('type') not in ('title', 'end'): W.append(f's{i:02d}: only {ts["d"]} s; viewers cannot read it')
@@ -42,8 +42,8 @@ for i, s in enumerate(S):
 if P.get('burn_captions') and any(x.get('sub') for x in S):
     E.append('burn_captions is set but scenes also have "sub": the two caption layers overlap. Clear "sub" (keep text in "cap"/"vo") or drop burn_captions')
 last = json.dumps(S[-1]).lower() if S else ''
-if not any(k in last for k in ('credit', 'by ', 'subscribe', 'follow', 'end')): W.append('outro: last scene has no credit / CTA')
-if T and T['duration'] > 60 and sum(1 for s in S if s.get('chapter')) < 3: W.append('chapters: add "chapter" titles to >=3 scenes (>=10 s apart) for YouTube chapters')
+if S and not any(k in last for k in ('credit', 'by ', 'subscribe', 'follow', 'end')): W.append('outro: last scene has no credit / CTA')
+if T and T.get('duration', 0) > 60 and sum(1 for s in S if s.get('chapter')) < 3: W.append('chapters: add "chapter" titles to >=3 scenes (>=10 s apart) for YouTube chapters')
 if 'horror' in genre:
     if not P.get('mute') : W.append('horror: no "mute" window; put 0.5-1 s of silence right before each stinger (scares need a vacuum)')
     if not any('sting' in x.get('file', '') for x in P.get('sfx', [])): W.append('horror: no stinger in sfx; run scripts/sfx_horror.sh')

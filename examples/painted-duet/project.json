@@ -1,2 +1,26 @@
-{ "title": "चाय में नमक | painted duet", "fps": 30, "width": 720, "aspect": [9, 16], "credit": "Swapnil Agrawal (BDS intern)",
-  "cast": "sharmaji + kaushalya pose packs from rigpop-motion (painted raster art)", "set": "set-aangan.png (AI-painted plate)" }
+{
+ "title": "चाय में नमक | painted duet",
+ "fps": 30,
+ "width": 720,
+ "aspect": [
+  9,
+  16
+ ],
+ "credit": "Swapnil Agrawal (BDS intern)",
+ "cast": "sharmaji + kaushalya pose packs from rigpop-motion (painted raster art)",
+ "set": "set-aangan.png (AI-painted plate)",
+ "look": {
+  "set": "AI-painted Indian aangan (courtyard) plate, warm afternoon light",
+  "palette": [
+   "#c8794a",
+   "#f2d8a7",
+   "#7a4b2e",
+   "#3f6f6a"
+  ],
+  "character": "Sharmaji and Kaushalya painted raster pose packs (rigpop-motion), hard-cut poses, blink, eye darts, lip-sync",
+  "type": "Baloo 2, chunky rounded",
+  "captions": "burned word captions from words.json, Baloo 2",
+  "camera": "slow push, cut to a medium on the punchline",
+  "signature": "chai sip -> namak reaction laugh on the punchline cut"
+ }
+}

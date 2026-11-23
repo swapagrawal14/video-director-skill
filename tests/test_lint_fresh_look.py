@@ -100,3 +100,15 @@ def test_pre_build_skips_index_checks(tmp_path):
     assert rc == 0, E
     rc, E, _ = lint(d)
     assert rc == 1
+
+
+def test_lint_no_scenes_timing_without_duration(tmp_path):
+    """Pose-pack projects (no scenes, timing.json with only fps) must lint without crashing."""
+    import json, subprocess, sys, os
+    root = os.path.join(os.path.dirname(__file__), '..')
+    (tmp_path / 'project.json').write_text(json.dumps({'title': 'x', 'look': {
+        'set': 'courtyard', 'palette': ['#112233', '#445566', '#778899'], 'character': 'none', 'type': 'serif',
+        'captions': 'pop', 'camera': 'push', 'signature': 'cut'}}))
+    (tmp_path / 'timing.json').write_text(json.dumps({'fps': 30}))
+    r = subprocess.run([sys.executable, os.path.join(root, 'scripts', 'lint.py'), str(tmp_path)], capture_output=True, text=True)
+    assert 'Traceback' not in r.stderr, r.stderr
