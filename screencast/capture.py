@@ -200,7 +200,8 @@ def _smooth_scroll(page, rec, px):
         rec.shot()
 
 
-def capture(steps, out_dir, viewport=(720, 1280), fps=30):
+def capture(steps, out_dir, viewport=(720, 1280), fps=30, css=None):
+    """css: optional stylesheet injected on every page (hide cookie/donation banners)."""
     plan = validate_steps(steps)
     if fps <= 0:
         raise ValueError("fps must be > 0")
@@ -220,6 +221,8 @@ def capture(steps, out_dir, viewport=(720, 1280), fps=30):
         try:
             ctx = browser.new_context(viewport={"width": w, "height": h}, device_scale_factor=1,
                                       ignore_https_errors=bool(px))
+            if css:
+                ctx.add_init_script("document.addEventListener('DOMContentLoaded',()=>{const s=document.createElement('style');s.textContent=%s;document.head.appendChild(s);});" % __import__('json').dumps(css))
             page = ctx.new_page()
             page.set_default_timeout(NAV_TIMEOUT_MS)
             rec = _Recorder(page, frames_dir, fps)

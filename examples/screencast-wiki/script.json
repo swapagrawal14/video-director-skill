@@ -1,0 +1,125 @@
+{
+ "title": "Wikipedia ko Hindi mein kaise padhein?",
+ "style": "whiteboard-multi",
+ "voice_id": "ca587611-ddaf-4658-8e13-b130e1abfdb2",
+ "language": "hi",
+ "music": "upbeat",
+ "end": {
+  "name": "Swapnil Agrawal",
+  "handle": "(BDS intern)"
+ },
+ "viewport": [
+  1280,
+  800
+ ],
+ "css": "#siteNotice,#centralNotice,.cn-fundraising,.frb,.vector-sticky-header{display:none!important}",
+ "beats": [
+  {
+   "vo": "Kisi bhi Wikipedia page ko Hindi mein padhna hai? Bas paanch aasaan steps, dekho!",
+   "pose": "wave",
+   "zoom": false
+  },
+  {
+   "vo": "Pehle Wikipedia kholo, aur search box mein apna topic likho. Jaise, Taj Mahal.",
+   "pose": "point",
+   "step": 1
+  },
+  {
+   "vo": "Enter dabao, aur article khul jaayega.",
+   "pose": "explain",
+   "step": 2
+  },
+  {
+   "vo": "Ab title ke paas, languages wale button par click karo.",
+   "pose": "point",
+   "step": 3,
+   "circle": true
+  },
+  {
+   "vo": "Search mein, Hindi likho.",
+   "pose": "explain",
+   "step": 4
+  },
+  {
+   "vo": "Aur Hindi wale link par click karo.",
+   "pose": "point",
+   "step": 5,
+   "circle": true,
+   "sub": "Aur हिन्दी wale link par click karo.",
+   "after_click": "out"
+  },
+  {
+   "vo": "Lo! Poora article ab Hindi mein hai. Kaam ka laga, toh follow karo!",
+   "pose": "thumbs",
+   "zoom": false
+  }
+ ],
+ "steps": [
+  {
+   "goto": "https://en.wikipedia.org/wiki/Main_Page"
+  },
+  {
+   "wait": 0.6
+  },
+  {
+   "mark": "b1"
+  },
+  {
+   "type": [
+    "input[name=search]",
+    "Taj Mahal"
+   ]
+  },
+  {
+   "wait": 0.4
+  },
+  {
+   "mark": "b2"
+  },
+  {
+   "press": "Enter"
+  },
+  {
+   "wait": 0.8
+  },
+  {
+   "mark": "b3"
+  },
+  {
+   "click": "#p-lang-btn"
+  },
+  {
+   "wait": 0.8
+  },
+  {
+   "mark": "b4"
+  },
+  {
+   "type": [
+    "input[placeholder=\"Search languages\"]",
+    "Hindi"
+   ]
+  },
+  {
+   "wait": 0.6
+  },
+  {
+   "mark": "b5"
+  },
+  {
+   "click": ".uls-menu a:text-is(\"हिन्दी\"):visible, a[hreflang=\"hi\"]:visible"
+  },
+  {
+   "wait": 1.6
+  },
+  {
+   "mark": "b6"
+  },
+  {
+   "scroll": 420
+  },
+  {
+   "wait": 1.2
+  }
+ ]
+}

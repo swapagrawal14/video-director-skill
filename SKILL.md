@@ -149,5 +149,6 @@ python3 scripts/qa.py Graded.mp4 projects/<slug>/captions.ass                   
 - three.js engine (`template/`): narrated explainers, horror shorts, painted characters with `headrig3d.js`.
 - `motion2d/`: object-action motion graphics (claymation, desi illustration, paper cut-out, 3D toy). Read docs/MOTION2D.md.
 - `handdrawn/`: hand-drawn / whiteboard reels in swap-studio style packs (pen draw-on, boil, write-on, marker swipe, karaoke, end card), plus a talking painted host (`handdrawn/examples/talking-explainer/`, diff-patch face rig). Read docs/HANDDRAWN.md.
+- `screencast/`: tutorial reels with a real browser recording on a tilted card plus a gesturing painted host (`python3 -m screencast all <proj>`). Read docs/SCREENCAST.md.
 - `vidliboom/`: a dialogue cartoon episode straight from a script.md (`python3 -m vidliboom script.md -o out.mp4 [--voice] [--format vertical]`). Read docs/EPISODE_SCRIPT.md.
 All engines: raster art only, never SVG; run scripts/motion_qa.py on the output before delivering.
