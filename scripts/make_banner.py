@@ -44,4 +44,4 @@ bg.alpha_composite(h,(745,H-430+40))
 # marker arrow pointing from host to cards
 ar=Image.open(R+'/screencast/assets/marker_arrow.png').convert('RGBA'); ar=ar.resize((170,int(ar.height*170/ar.width))).rotate(18,expand=True)
 bg.alpha_composite(ar,(850,300))
-bg.convert('RGB').save(R+'/docs/img/hero.jpg',quality=90)
+bg.convert('RGB').save(R+'/docs/img/hero-v2.jpg',quality=90)

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/img/hero.jpg" alt="Video Director Skill" width="100%">
+<img src="docs/img/hero-v2.jpg" alt="Video Director Skill" width="100%">
 
 # 🎬 Video Director Skill
 
