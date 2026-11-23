@@ -1,0 +1,38 @@
+{
+  "$schema": "../style.schema.json",
+  "name": "whiteboard-multi",
+  "label": "Whiteboard Multi-colour",
+  "kicker": "Whiteboard",
+  "colors": {
+    "bg": "#FFFFFF",
+    "paper": "#FCFCFA",
+    "ink": "#161616",
+    "accent": "#1E6FE8",
+    "accent2": "#FFFFFF",
+    "sun": "none",
+    "textOnBg": "#161616",
+    "mark": "#E8590C",
+    "highlightText": "#161616"
+  },
+  "sceneAccents": [
+    {"name": "blue",   "marker": "#1E6FE8", "swipe": "#8EC5FF", "karaoke": "#1E6FE8"},
+    {"name": "orange", "marker": "#E8590C", "swipe": "#FFC078", "karaoke": "#F76707"},
+    {"name": "green",  "marker": "#2B8A3E", "swipe": "#A9E34B", "karaoke": "#2F9E44"},
+    {"name": "purple", "marker": "#7048E8", "swipe": "#D0BFFF", "karaoke": "#7950F2"},
+    {"name": "red",    "marker": "#E03131", "swipe": "#FFA8A8", "karaoke": "#F03E3E"},
+    {"name": "teal",   "marker": "#0C8599", "swipe": "#99E9F2", "karaoke": "#1098AD"},
+    {"name": "yellow", "marker": "#E67700", "swipe": "#FFE066", "karaoke": "#F08C00"}
+  ],
+  "fonts": {
+    "title":   {"family": "Permanent Marker", "weight": 400, "src": "fonts/PermanentMarker-400-normal.woff2", "fallback": "cursive", "scale": 0.8},
+    "body":    {"family": "Patrick Hand", "weight": 400, "src": "fonts/PatrickHand-400-normal.woff2", "fallback": "cursive", "scale": 1.0},
+    "caption": {"family": "Baloo 2", "weight": 800, "src": "fonts/Baloo2-800-normal.woff2", "fallback": "sans-serif", "scale": 0.9}
+  },
+  "accents": "rough",
+  "sparkles": false,
+  "decorations": [],
+  "imageStylePrompt": "Hand-drawn whiteboard marker doodle, bold dark black ink outlines of even thickness, colourful marker fill (blue, orange, green, purple, red, yellow), slightly imperfect hand-drawn lines, flat colours with light marker streaks, plain pure white background, centered single subject, no shadows on background, no text, no letters, no watermark.",
+  "voice": {"name": "hi-IN-SwaraNeural", "rate": "+8%"},
+  "endCard": {"name": "Your Name", "handle": "@yourhandle", "channel": "Your Channel", "cta": "Follow for more!"},
+  "captions": {"highlightColor": "per-scene", "case": "none", "color": "#FFFFFF", "stroke": "#161616"}
+}
