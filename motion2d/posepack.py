@@ -151,3 +151,25 @@ if __name__ == '__main__':                                  # python3 engine/pos
     rows, probs = check_registration(files)
     for r in rows: print(r)
     print('\n'.join(probs) if probs else 'registration OK')
+
+def chroma_key(im, screen=(0, 255, 0), lo=40, soft=60, ring_px=4):
+    """Key a flat-RGB generation shot on #00FF00 into a clean RGBA cut-out, then despill the edge.
+    Image models usually return RGB (no alpha) with the screen baked in: always run this before
+    check_registration / Cast. lo = green dominance (G - max(R,B)) where keying starts, soft = ramp width.
+    Maths in float32: uint8/int16 overflows silently and leaves the whole canvas opaque (coverage ~0.99)."""
+    a = np.array(im.convert('RGB')).astype(np.float32)
+    gr = a[..., 1] - np.maximum(a[..., 0], a[..., 2])
+    al = np.clip(255 - (gr - lo) * 255 / soft, 0, 255).astype(np.uint8)
+    return despill_edge(Image.fromarray(np.dstack([a.astype(np.uint8), al]), 'RGBA'), ring_px)
+
+
+def drop_specks(im, min_frac=0.02, thr=40):
+    """Remove stray specks (sparkles, dust, sweat drops floating off the figure) that throw off the alpha bbox
+    and so the baseline/height checks. Keeps every blob at least min_frac of the largest one."""
+    a = np.array(im.convert('RGBA')); m = (a[..., 3] > thr).astype(np.uint8)
+    n, lab, st, _ = cv2.connectedComponentsWithStats(m)
+    if n <= 2: return Image.fromarray(a, 'RGBA')
+    big = int(np.argmax(st[1:, 4])) + 1
+    keep = np.isin(lab, [i for i in range(1, n) if st[i, 4] >= min_frac * st[big, 4]]).astype(np.uint8)
+    a[..., 3] = a[..., 3] * cv2.dilate(keep, np.ones((5, 5), np.uint8))
+    return Image.fromarray(a, 'RGBA')

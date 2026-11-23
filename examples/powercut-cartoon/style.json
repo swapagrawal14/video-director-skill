@@ -1,0 +1,27 @@
+{
+ "label": "pastel_metro (read from reference)",
+ "core": "2D cartoon, pastel bright colours, clean flat fills, even #4E2E32 outlines, simple readable shapes, consistent cel look",
+ "outline_px": 6,
+ "ink": "#4E2E32",
+ "palette": [
+  "#E9C5CD",
+  "#B1E0F4",
+  "#F9F4F2",
+  "#5A3B3E",
+  "#9D878C",
+  "#F3CF83"
+ ],
+ "boil": 0.8,
+ "paper": 0.0,
+ "grain": 0.0,
+ "hold": "twos",
+ "squash": 0.08,
+ "night": "violet",
+ "measured": {
+  "saturation": 0.207,
+  "value": 0.895,
+  "texture": 6.8,
+  "has_outline": true,
+  "flatness": 0.61
+ }
+}
