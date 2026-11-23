@@ -262,6 +262,7 @@ class Light:
     def level(self, t, name):
         """0..1: how much of grade `name` is on screen at t (drive emissive FX with it)."""
         prev, cur, u = self._state(t)
+        if prev == cur: return 1.0 if cur == name else 0.0       # no transition in progress: fully that grade
         return (u if cur == name else 0.0) + ((1 - u) if prev == name and cur != name else 0.0)
 
     def apply(self, fr, t):
@@ -313,6 +314,7 @@ def glow_eyes(fr, pts, t, on=1.0, color='#FF3D9A', r=7, bloom=3.2, blink=(), cor
 def spin(im, t, rpm=60.0, blur_deg=0.0, steps=5):
     """Rotate a centred part (fan blades, wheel, clock hand). blur_deg>0 smears it like a fast fan."""
     a = -(t * rpm / 60.0) * 360.0
+    im = im.convert('RGBA')
     if blur_deg <= 0: return im.rotate(a, resample=Image.BICUBIC)
     acc = np.zeros((im.height, im.width, 4), np.float32)
     for i in range(steps):
@@ -362,11 +364,11 @@ class Parallax:
         fr = np.zeros((self.H, self.W, 3), np.float32) if base is None else base.astype(np.float32).copy()
         for a, depth in self.L:
             h, w = a.shape[:2]; off = int(t * self.speed * depth) % w
-            strip = np.concatenate([a, a], 1)[:, off:off + self.W] if w < self.W * 2 else a[:, off:off + self.W]
-            if strip.shape[1] < self.W: strip = np.concatenate([strip, a[:, :self.W - strip.shape[1]]], 1)
-            y = self.H - h
-            sub = strip[:min(h, self.H), :self.W].astype(np.float32); al = sub[..., 3:4] / 255
-            y0 = max(0, y); sub = sub[y0 - y:]; al = al[y0 - y:]
+            reps = -(-(off + self.W) // w)                     # enough tiles for any tile width (even w < W/2)
+            strip = (np.tile(a, (1, reps, 1)) if reps > 1 else a)[:, off:off + self.W]
+            y = self.H - h                                     # bottom-aligned; a layer taller than H shows its bottom H rows
+            sub = strip[max(0, h - self.H):, :self.W].astype(np.float32); al = sub[..., 3:4] / 255
+            y0 = max(0, y)
             fr[y0:y0 + sub.shape[0]] = fr[y0:y0 + sub.shape[0]] * (1 - al) + sub[..., 2::-1] * al
         return fr
 
@@ -435,7 +437,7 @@ class BeatSheet:
             gaps = [b - a_ for a_, b in zip([0.0] + ts, ts + [duration])]
             if max(gaps) > max_still + 1e-6: probs.append(f'{a}: holds {max(gaps):.1f}s without a new beat (max {max_still}s)')
         for r in self.rows:
-            if r['actor'] not in ('cam',) and not r['sfx'] and r['actor'] != 'light':
+            if r['actor'] not in ('cam', 'light', 'fx') and not r['sfx']:
                 probs.append(f"{r['t']:.2f}s {r['actor']} '{r['act']}' has no SFX")
         return probs
 
