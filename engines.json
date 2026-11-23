@@ -4,7 +4,8 @@
   "motion2d": "object-action motion graphics, pose packs, SFX",
   "handdrawn": "whiteboard draw-on reels",
   "screencast": "browser recording + host",
-  "vidliboom": "dialogue cartoon episode"
+  "vidliboom": "dialogue cartoon episode",
+  "motion2d/cartoon": "cartoon scenes and episodes in any art style (style packs, style_ref.py, beat sheet, lighting, prop rigs, tiny planet)"
  },
  "fetch": {
   "vid-shark": {

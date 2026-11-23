@@ -132,6 +132,19 @@ if IDX and not PRE_BUILD:
         sm = difflib.SequenceMatcher(None, _mine, _norm(open(rp, encoding='utf-8', errors='ignore').read()), autojunk=False)
         if sm.real_quick_ratio() > .85 and sm.quick_ratio() > .85 and sm.ratio() > .85:
             E.append(f'index.html copied from {ref} ({sm.ratio():.0%} identical); {FRESH}')
+# (e) cartoon beat sheet: no character holds a pose > 4 s, SFX on every character beat (docs/CARTOON.md)
+_bp = os.path.join(d, 'beats.json')
+if os.path.exists(_bp):
+    try:
+        sys.path.insert(0, os.path.join(ROOT, 'motion2d'))
+        from cartoon import BeatSheet
+        _rows = json.load(open(_bp, encoding='utf-8'))
+        _rows = _rows.get('beats', _rows) if isinstance(_rows, dict) else _rows
+        _bs_ = BeatSheet([(r['t'], r['actor'], r.get('act') or r.get('pose'), r.get('sfx'), r.get('note')) if isinstance(r, dict) else r for r in _rows])
+        _dur = (T.get('duration') if isinstance(T, dict) else None) or max([r['t'] for r in _bs_.rows] + [0]) + 1.0
+        for x in _bs_.check(float(_dur)): E.append(f'beats.json: {x} (docs/CARTOON.md)')
+    except Exception as ex:
+        E.append(f'beats.json unreadable: {ex}')
 if asjson: print(json.dumps({'errors': E, 'warnings': W}, indent=1))
 else:
     for x in E: print('ERROR', x)
