@@ -1,11 +1,15 @@
 """Screencast tutorial reels, one command per stage (or `all`).
 
-  python3 -m screencast capture <proj>          # browser steps from script.json -> capture/
+  python3 -m screencast capture <proj>          # browser steps from script.json -> capture/ ("device": "mobile" = phone emulation;
+                                                #   "recording": {...} = load a screen recording instead)
   python3 -m screencast voice   <proj>          # VO per beat -> vo/sNN.wav (Cartesia if CARTESIA_VOICE_ID/voice_id set, else edge-tts)
   python3 -m screencast build   <proj>          # timeline.json + vo_full.wav + music + mix.wav (-14 LUFS, ducked)
   python3 -m screencast sfx     <proj>          # procedural SFX on cuts/clicks/typing/stickers -> mix_sfx.wav
   python3 -m screencast stills  <proj> 1 5 9    # preview frames -> <proj>/shots/  (LOOK at them)
   python3 -m screencast render  <proj> [out.mp4] [--jobs 2]   # chunked render + mux, 1080x1920
+  python3 -m screencast align   <proj>          # forced-aligned visemes + word times -> align.json (scripts/align.py)
+  --lipsync align|loudness|auto  on build/stills/render/all: align = (re)build align.json when stale; loudness = ignore it;
+                                 auto (default) = use align.json when it matches timeline.json
   python3 -m screencast all     <proj> [out.mp4]
 
 <proj> holds script.json and host/ (python3 -m screencast.make_pack host ...). See docs/SCREENCAST.md.
@@ -22,7 +26,15 @@ def capture(proj):
     sys.path.insert(0, ROOT)
     from screencast.capture import capture as cap
     S = json.load(open(f'{proj}/script.json'))
-    r = cap(S['steps'], f'{proj}/capture', viewport=tuple(S.get('viewport', [1280, 800])), fps=S.get('capture_fps', 30), css=S.get('css'))
+    rec = S.get('recording')   # {"path": "phone.mp4", "marks": [s, ...], "touches": [...]} instead of browser steps
+    if rec:
+        from screencast.capture import load_recording
+        path = rec['path'] if os.path.isabs(rec['path']) else os.path.join(proj, rec['path'])
+        r = load_recording(path, f'{proj}/capture', fps=S.get('capture_fps', 30), device=S.get('device'),
+                           marks=rec.get('marks'), touches=rec.get('touches'))
+    else:
+        r = cap(S['steps'], f'{proj}/capture', viewport=tuple(S.get('viewport', [1280, 800])), fps=S.get('capture_fps', 30), css=S.get('css'),
+                device=S.get('device'), device_name=S.get('device_name'), max_dpr=S.get('max_dpr', 2.0))
     json.dump(r, open(f'{proj}/capture/capture.json', 'w'), indent=1)
     marks = sum(1 for e in r['events'] if e['type'] == 'mark')
     print(f"captured {r['n_frames']} frames, {marks} marks for {len(S['beats'])} beats")
@@ -80,6 +92,13 @@ def build(proj, fps=30):
     print(f'timeline {dur:.1f}s, {len(segs)} beats')
 
 
+def lipsync(proj, force=False):
+    """(Re)build <proj>/align.json for the current timeline.json (MMS_FA forced alignment, loudness fallback)."""
+    sys.path.append(os.path.join(ROOT, 'scripts')); import align
+    if force or not align.is_fresh(f'{proj}/align.json', json.load(open(f'{proj}/timeline.json'))):
+        r = align.align_project(proj); print(f"align.json: {r['method']}, {len(r['words'])} words, {len(r['visemes'])} viseme changes")
+
+
 def stills(proj, ts):
     sys.path.insert(0, ROOT); from screencast.compose import render as r
     r(proj, 0, 0, f'{proj}/shots', stills=ts); print('stills ->', f'{proj}/shots')
@@ -104,15 +123,21 @@ if __name__ == '__main__':
     cmd, proj = sys.argv[1], os.path.abspath(sys.argv[2]); rest = sys.argv[3:]
     jobs = 2
     if '--jobs' in rest: i = rest.index('--jobs'); jobs = int(rest[i + 1]); rest = rest[:i] + rest[i + 2:]
+    if '--lipsync' in rest: i = rest.index('--lipsync'); os.environ['VD_LIPSYNC'] = rest[i + 1]; rest = rest[:i] + rest[i + 2:]
+    if os.environ.get('VD_LIPSYNC') == 'align' and cmd in ('stills', 'render'): lipsync(proj)   # once, before chunks fork
     if cmd == 'capture': capture(proj)
     elif cmd == 'voice': voice(proj)
-    elif cmd == 'build': build(proj)
+    elif cmd == 'build':
+        build(proj)
+        if os.environ.get('VD_LIPSYNC') == 'align': lipsync(proj)
+    elif cmd == 'align': lipsync(proj, force=True)
     elif cmd == 'sfx':
         sys.path.insert(0, ROOT); from screencast.sfx import mix; mix(proj)
     elif cmd == 'stills': stills(proj, rest or ['1', '5', '9'])
     elif cmd == 'render': render(proj, rest[0] if rest else None, jobs)
     elif cmd == 'all':
         capture(proj); voice(proj); build(proj)
+        if os.environ.get('VD_LIPSYNC') == 'align': lipsync(proj)
         sys.path.insert(0, ROOT); from screencast.sfx import mix; mix(proj)
         render(proj, rest[0] if rest else None, jobs)
     else: sys.exit(__doc__)

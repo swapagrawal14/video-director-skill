@@ -44,6 +44,7 @@ full render. Looking at stills yourself is not approval.
   VO beats, plus breath, blink and lip-sync. A single still with only a mouth patch is a FAIL; the host
   changes pose at least every 3-4 s while on screen. Generate the poses from the master with the master as
   first reference (`motion2d/posepack.py`, `docs/CHARACTERS.md`).
+- **Doctor/dentist on screen = `hosts/dentist`** (Swapnil's own painted dentist host pack: talk, point, explain, thumbs, wave, thinking + lip-sync/blink); see `hosts/README.md`.
 - **A sound on every action** (pop, whoosh, click, wire twang, squish) via `motion2d/sfx.py`, VO-led mix.
 - **Camera lives:** slow push, stop-motion jitter or line boil; squash/stretch and overshoot on entrances.
 - Write the action list (t, verb, object, SFX) before coding, and check it against the storyboard.

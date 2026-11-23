@@ -1,7 +1,10 @@
 """Talking-character whiteboard explainer (demo: hypnic jerk, Hinglish).
 Usage: python3 render.py <start_frame> <end_frame> <out.mp4>   (render in 2 chunks, then concat + mux mix.wav)
-       python3 render.py 0 0 <dir> <t1> <t2> ...                 (preview stills)"""
+       python3 render.py 0 0 <dir> <t1> <t2> ...                 (preview stills)
+Lip-sync: uses ./align.json (python3 ../../../scripts/align.py --project .) when it matches timeline.json, else loudness.
+       --lipsync align|loudness|auto (default auto; align = build align.json if missing/stale)"""
 import sys, os, json, math
+if '--lipsync' in sys.argv: _i = sys.argv.index('--lipsync'); os.environ['VD_LIPSYNC'] = sys.argv[_i + 1]; del sys.argv[_i:_i + 2]
 PROJ = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 from hd import *
@@ -10,6 +13,9 @@ W, H = 720, 1280
 S = load_style('whiteboard-multi'); C = S['colors']
 TL = json.load(open(f'{PROJ}/timeline.json')); FPS = TL['fps']; DUR = TL['duration']
 SEG = TL['segs']; WORDS = TL['words']; MOUTH = TL['mouth']
+sys.path.append(os.path.join(PROJ, '..', '..', '..', 'scripts')); from align import project_track
+LIP, _aw = project_track(PROJ, TL, {'rest', 'A', 'O'})   # aligned visemes (E->A, M->rest) + word times, or (None, None)
+if _aw: WORDS = _aw
 A = f'{PROJ}/assets'
 BG = paper(W, H, S)
 
@@ -28,6 +34,7 @@ blink_im = patch('char_blink')
 CHAR_BLINK = sc(blink_im)
 
 def mouth_at(t):
+    if LIP: return LIP[min(int(t * FPS), len(LIP) - 1)]
     k = int(t * FPS); lv = MOUTH[k] if k < len(MOUTH) else 0
     lv2 = MOUTH[k - 1] if 0 < k < len(MOUTH) else 0; v = (lv + lv2) / 2
     if v > .38: return 'A'

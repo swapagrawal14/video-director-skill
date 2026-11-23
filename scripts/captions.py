@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Word timestamps JSON -> TikTok-style ASS captions (karaoke sweep OR pop-in active word).
 words.json: [{"word":"Hello","start":0.00,"end":0.34}, ...]  (faster-whisper / stable-ts / edge-tts / Cartesia timestamps)
+            or an align.json from scripts/align.py ({"words": [{"w","start","end"}]}, forced-aligned: tightest timing)
 Usage: python3 scripts/captions.py words.json out.ass --w 1080 --h 1920 --style pop|karaoke --font "Baloo 2" --max-words 3
 Burn:  ffmpeg -i in.mp4 -vf "ass=out.ass:fontsdir=fonts" -c:v libx264 -crf 18 -c:a copy out.mp4"""
 import json, argparse
@@ -12,6 +13,8 @@ ap.add_argument('--max-words', type=int, default=3); ap.add_argument('--max-gap'
 ap.add_argument('--upper', action='store_true'); ap.add_argument('--active', default='FFE500', help='active-word colour RRGGBB (horror: FFFFFF or B01010)'); ap.add_argument('--idle', default='FFFFFF', help='other words colour RRGGBB')
 a = ap.parse_args()
 W = json.load(open(a.words))
+if isinstance(W, dict): W = W['words']                     # align.json (scripts/align.py): forced-aligned word times
+W = [dict(w, word=w.get('word', w.get('w', ''))) for w in W]
 vertical = a.h > a.w
 fs = int(a.h * (0.055 if vertical else 0.065))        # ~105 px on 1920 tall, ~70 px on 1080
 mv = int(a.h * (0.30 if vertical else 0.08))          # vertical: keep above Shorts/Reels UI (bottom ~25-30%)

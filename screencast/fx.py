@@ -208,3 +208,99 @@ def make_bg(kind, W, H, graph=None, seed=0):
             cv2.ellipse(img, (x, y), (9, 4), float(rng.integers(0, 180)), 0, 360, c, -1, cv2.LINE_AA)
     img += rng.normal(0, 3, (H, W, 1))
     return np.clip(img, 0, 255).astype(np.uint8)
+
+
+# ---------------------------------------------------------------- mobile: phone frame + touch overlays
+def screen_hole(alpha, thresh=128):
+    """Bounding box (x, y, w, h) and mask (HxW bool) of the screen: the largest transparent region of a
+    phone-bezel PNG that does not touch the image border. Raises ValueError if the bezel has no hole."""
+    clear = (alpha < thresh).astype(np.uint8)
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(clear, connectivity=4)
+    H, W = alpha.shape[:2]; best = None
+    for i in range(1, n):
+        x, y, w, h, area = stats[i]
+        if x == 0 or y == 0 or x + w >= W or y + h >= H: continue      # outside of the phone
+        if best is None or area > stats[best][4]: best = i
+    if best is None: raise ValueError('phone frame has no transparent screen area')
+    x, y, w, h, _ = stats[best]
+    return (int(x), int(y), int(w), int(h)), lab == best
+
+
+def phone_frame_for(bezel, vw, vh, phone_h, max_w=None, corner=.09):
+    """Fit a raster bezel (float RGBA, transparent screen) around a vw x vh capture.
+    The bezel is scaled so its screen width matches, then nine-slice stretched vertically (corners and
+    camera band untouched) so the screen gets the capture's aspect. Total height ~= phone_h.
+    Returns (frame RGBA float, screen rect (x, y, w, h), screen mask HxW float 0..1)."""
+    (sx, sy, sw0, sh0), _ = screen_hole(bezel[..., 3])
+    H0, W0 = bezel.shape[:2]; mt, mb = sy, H0 - (sy + sh0)
+    sw = phone_h / ((mt + mb) / sw0 + vh / vw)
+    if max_w and sw * W0 / sw0 > max_w: sw = max_w * sw0 / W0
+    k = sw / sw0; sh = sw * vh / vw
+    B = cv2.resize(bezel, (max(1, round(W0 * k)), max(1, round(H0 * k))), interpolation=cv2.INTER_AREA if k < 1 else cv2.INTER_LINEAR)
+    r = corner * sw0
+    a, b = int(round((sy + r) * k)), int(round((sy + sh0 - r) * k))
+    mid_h = max(1, int(round((b - a) + (sh - sh0 * k))))
+    mid = cv2.resize(B[a:b], (B.shape[1], mid_h), interpolation=cv2.INTER_LINEAR)
+    frame = np.concatenate([B[:a], mid, B[b:]], 0)
+    (x, y, w, h), m = screen_hole(frame[..., 3])
+    m = cv2.dilate(m.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(np.float32)
+    m = cv2.GaussianBlur(m, (3, 3), 0)
+    return frame, (x, y, w, h), m
+
+
+def _ring_layer(r_out):
+    s = int(2 * r_out + 8); return np.zeros((s, s, 4), np.float32), s / 2
+
+
+def tap_ripple(age, radius=34, color=(255, 255, 255)):
+    """Raster tap ripple (two expanding rings + a soft filled dot) at `age` seconds after the touch,
+    drawn in code. Returns (RGBA float, cx, cy) or None after it has faded."""
+    if age < 0 or age > .55: return None
+    img, c = _ring_layer(radius * 2.1)
+    dot = 1 - ease(age / .3)
+    if dot > 0:
+        cv2.circle(img, (int(c), int(c)), int(radius * .55), (*color, 150 * dot), -1, cv2.LINE_AA)
+    for lag, w in ((0, 5), (.12, 3)):
+        u = (age - lag) / .43
+        if 0 <= u <= 1:
+            rr = int(radius * (.5 + 1.5 * ease(u)))
+            cv2.circle(img, (int(c), int(c)), rr, (40, 40, 48, 140 * (1 - u)), w + 3, cv2.LINE_AA)
+            cv2.circle(img, (int(c), int(c)), rr, (*color, 255 * (1 - u)), w, cv2.LINE_AA)
+    img = cv2.GaussianBlur(img, (3, 3), 0)
+    return img, c, c
+
+
+def press_ring(progress, radius=34, color=(255, 210, 63)):
+    """Raster long-press indicator: a dot plus an arc that fills clockwise as progress goes 0 -> 1."""
+    img, c = _ring_layer(radius * 1.2); ci = (int(c), int(c))
+    cv2.circle(img, ci, int(radius * .55), (255, 255, 255, 150), -1, cv2.LINE_AA)
+    cv2.circle(img, ci, radius, (40, 40, 48, 90), 7, cv2.LINE_AA)
+    end = -90 + 360 * min(1, max(0, progress))
+    cv2.ellipse(img, ci, (radius, radius), 0, -90, end, (40, 40, 48, 220), 9, cv2.LINE_AA)
+    cv2.ellipse(img, ci, (radius, radius), 0, -90, end, (*color, 255), 5, cv2.LINE_AA)
+    return img, c, c
+
+
+def swipe_trail(dst, pts, fade=1.0, width=22, color=(255, 255, 255)):
+    """Draw a tapered, fading swipe trail through pts (list of (x, y), oldest first) onto float RGBA dst."""
+    n = len(pts)
+    if n < 2 or fade <= 0: return dst
+    layer = np.zeros_like(dst)
+    for i in range(1, n):
+        u = i / (n - 1)                       # 0 at the tail, 1 at the finger
+        p0 = tuple(int(round(v)) for v in pts[i - 1]); p1 = tuple(int(round(v)) for v in pts[i])
+        w = max(2, int(width * (.25 + .75 * u)))
+        cv2.line(layer, p0, p1, (40, 40, 48, 110 * u * fade), w + 6, cv2.LINE_AA)
+        cv2.line(layer, p0, p1, (*color, 235 * u * fade), w, cv2.LINE_AA)
+    layer = cv2.GaussianBlur(layer, (5, 5), 0); a = layer[..., 3:4] / 255
+    dst[..., :3] = dst[..., :3] * (1 - a) + layer[..., :3] * a
+    dst[..., 3:4] = np.maximum(dst[..., 3:4], layer[..., 3:4])
+    return dst
+
+
+def finger_tip(finger, thresh=128):
+    """(x, y) of the fingertip in a finger PNG: centre of the topmost opaque rows."""
+    ys, xs = np.nonzero(finger[..., 3] > thresh)
+    if not len(ys): return finger.shape[1] / 2, 0
+    top = ys.min(); sel = ys <= top + max(3, finger.shape[0] // 60)
+    return float(xs[sel].mean()), float(top + finger.shape[0] * .02)

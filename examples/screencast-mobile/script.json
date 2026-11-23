@@ -1,0 +1,77 @@
+{
+ "title": "Phone par Wikipedia kaise chalayein?",
+ "style": "whiteboard-multi",
+ "language": "hi",
+ "edge_voice": "hi-IN-SwaraNeural",
+ "music": "upbeat",
+ "end": {
+  "name": "Swapnil Agrawal",
+  "handle": "(BDS intern)"
+ },
+ "device": "mobile",
+ "device_name": "Pixel 7",
+ "css": "#siteNotice,#centralNotice,.cn-fundraising,.frb,[class*=app-banner],[id*=app-banner],[class*=appBanner],.mw-pulsating-dot::before,.mw-pulsating-dot::after{display:none!important}.mw-pulsating-dot{animation:none!important}",
+ "beats": [
+  {
+   "vo": "Phone par Wikipedia padhna hai? Bas chaar aasaan steps, dekho!",
+   "pose": "wave",
+   "zoom": false
+  },
+  {
+   "vo": "Upar search icon par tap karo, aur apna topic likho. Jaise, Taj Mahal.",
+   "pose": "point",
+   "step": 1,
+   "circle": true
+  },
+  {
+   "vo": "Enter dabao, aur article khul jaayega.",
+   "pose": "talk",
+   "step": 2
+  },
+  {
+   "vo": "Ab ungli se upar swipe karo, aur aaraam se padho.",
+   "pose": "point",
+   "step": 3,
+   "zoom": false,
+   "sticker": {"text": "SWIPE!", "at": 0.5, "color": "#ffd23f", "x": 0.86, "y": 330, "tilt": 8}
+  },
+  {
+   "vo": "Kisi bhi neele link par tap karo, jaise Shah Jahan, aur naya page khul jaayega.",
+   "pose": "point",
+   "step": 4,
+   "circle": true,
+   "after_click": "out"
+  },
+  {
+   "vo": "Itna hi! Kaam ka laga, toh follow karo!",
+   "pose": "wave",
+   "zoom": false
+  }
+ ],
+ "steps": [
+  {"goto": "https://en.m.wikipedia.org/wiki/Main_Page"},
+  {"wait": 0.8},
+  {"mark": "b1"},
+  {"tap": "#searchIcon"},
+  {"wait": 0.5},
+  {"type": ["input[name=search]:visible", "Taj Mahal"]},
+  {"wait": 0.5},
+  {"mark": "b2"},
+  {"press": "Enter"},
+  {"wait": 1.2},
+  {"mark": "b3"},
+  {"swipe": {"dir": "up", "px": 420}},
+  {"wait": 0.3},
+  {"swipe": {"dir": "up", "px": 420}},
+  {"wait": 0.6},
+  {"mark": "b4"},
+  {"swipe": {"dir": "down", "px": 600, "seconds": 0.4}},
+  {"swipe": {"dir": "down", "px": 600, "seconds": 0.4}},
+  {"wait": 0.4},
+  {"tap": "#mw-content-text p a:text-is(\"Shah Jahan\")"},
+  {"wait": 1.4},
+  {"mark": "b5"},
+  {"swipe": {"dir": "up", "px": 300}},
+  {"wait": 1.0}
+ ]
+}
