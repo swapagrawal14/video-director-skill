@@ -31,7 +31,7 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 
 **ढाई बजे · 2:30 AM** — Hindi horror Short (9:16, 64 s)<br>
 *Every time the bulb flickers, she gets closer.*<br>
-[▶ Watch the preview](docs/showcase/dhai-baje-preview.mp4) · [Source](examples/dhai-baje/)
+[Source](examples/dhai-baje/)
 
 </td>
 <td width="58%" align="center">

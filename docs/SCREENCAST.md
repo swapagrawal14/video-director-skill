@@ -37,6 +37,9 @@ Retention comes from change: something new should land every 2.5 to 3.5 s.
 ## Assets are a starting kit, not a limit
 Nothing in `screencast/assets/` is fixed. An agent making a video should generate whatever that video needs: new host characters and poses (image edits of one base drawing), props, stickers, backgrounds, cursors, badges and sounds, raster only (no SVG, no 3D). Add a new background kind to `fx.make_bg`, a new cue to `sfx.make`, or a new pose to the host pack whenever the script calls for one. Reuse the kit only where it already fits.
 
+## Mobile mode (experimental)
+`"device": "mobile"` in `script.json` records a phone instead of a desktop browser (Pixel 7 by default, or any Playwright device name), with `tap`, `swipe` and `long_press` steps, a phone frame and a finger. It is still a work in progress: check every still before rendering, and use desktop mode for anything that must ship today.
+
 ## Run
 ```
 python3 -m screencast capture <proj>     # Playwright -> capture/frames + capture.json (boxes, events, marks)

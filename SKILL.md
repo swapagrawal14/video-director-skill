@@ -5,6 +5,18 @@ description: Direct and produce outstanding, fully finished videos on ANY topic 
 
 # Video Director
 
+> **Quick path (read the rest as each step needs it)**
+> 1. `bash scripts/setup.sh` once (must end with "Setup done.").
+> 2. Ask the brief: topic, format (9:16 / 16:9), language + voice, credit line.
+> 3. Offer 3 treatments (`docs/INTAKE.md`), mark your pick, wait for a choice.
+> 4. Pick the engine (see *Choosing an engine*) and one recipe (`docs/STYLES.md`).
+> 5. Script -> VO (`tts_free.py` or `tts_cartesia.py`) -> `build_timing.py` -> `lint.py`.
+> 6. Build the scenes; objects act on every VO line. Raster only, never SVG.
+> 7. Storyboard stills (`shot.py`) -> user says yes -> full render (`render_all.py`).
+> 8. Music + mix (-14 LUFS) -> captions -> `mux.py` -> optional `grade.py` / `export.py`.
+> 9. `qa.py` must print QA PASSED (and `motion_qa.py` for characters).
+> 10. Deliver MP4 + thumbnail + title/description/tags. Never publish for the user.
+
 You are not "generating a video". You are a **director + 3D artist + editor** shipping a polished film.
 The bar: a viewer should think a small studio made it. Never basic, never a slideshow of text, never stock-looking.
 
@@ -198,6 +210,6 @@ Full routing table across all her repos: `docs/ENGINES.md`. Built in:
 - three.js engine (`template/`): narrated explainers, horror shorts, painted characters with `headrig3d.js`.
 - `motion2d/`: object-action motion graphics in ANY raster style (claymation, desi illustration, paper cut-out, 3D toy, ink-and-marker hand-drawn). DEFAULT for tutorials and procedures in a 2D look, including "hand-drawn" ones: objects act, pose-pack characters, SFX. Read docs/MOTION2D.md.
 - `handdrawn/`: whiteboard / pen draw-on reels, only when the user picks a whiteboard treatment or for short concept overviews in swap-studio style packs (pen draw-on, boil, write-on, marker swipe, karaoke, end card), plus a talking painted host (`handdrawn/examples/talking-explainer/`, diff-patch face rig). Read docs/HANDDRAWN.md.
-- `screencast/`: tutorial reels with a real browser recording on a tilted card plus a gesturing painted host (`python3 -m screencast all <proj>`). Read docs/SCREENCAST.md. Its assets are a starter kit: generate new characters, poses, props, stickers, backgrounds and sounds for each video as it needs them (raster only). Add procedural SFX with `python3 -m screencast sfx <proj>`, and blur anything personal in a capture with `"blur"`.
+- `screencast/`: tutorial reels (desktop browser; phone recording via `"device": "mobile"` is experimental) with a real browser recording on a tilted card plus a gesturing painted host (`python3 -m screencast all <proj>`). Read docs/SCREENCAST.md. Its assets are a starter kit: generate new characters, poses, props, stickers, backgrounds and sounds for each video as it needs them (raster only). Add procedural SFX with `python3 -m screencast sfx <proj>`, and blur anything personal in a capture with `"blur"`.
 - `vidliboom/`: a dialogue cartoon episode straight from a script.md (`python3 -m vidliboom script.md -o out.mp4 [--voice] [--format vertical]`). Read docs/EPISODE_SCRIPT.md.
 All engines: raster art only, never SVG; run scripts/motion_qa.py on the output before delivering.
