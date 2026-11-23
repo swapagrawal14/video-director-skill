@@ -88,11 +88,12 @@ Try: *"a 9:16 Hindi horror short about a hostel lift that stops at a floor that 
 |---|---|---|
 | `motion2d/` (from vid-shark) | Motion graphics where objects do the action: pours, wipes, drops, launches. Procedural SFX on every action, VO-led mix, chunked parallel render | `python3 motion2d/examples/chai/render.py` |
 | `handdrawn/` (swap-studio style packs) | Hand-drawn / whiteboard reels: pen draw-on of line art, line boil, write-on titles, marker swipes, karaoke captions, end cards, in 7 style packs. Raster only | `python3 handdrawn/examples/chai-doodle/render.py chalkboard out.mp4` |
+| `screencast/` (new) | Tutorial reels: a real browser recording on a tilted, taped card, with auto-zoom to each click, an eased cursor, marker circles and STEP chips. A painted talking host switches gesture poses every beat. Camera push-ins, whip/rip/zoom-blur cuts, contrasting backgrounds that swap each beat, scramble captions (Hindi too) | `python3 -m screencast all examples/screencast-wiki out.mp4` |
 | `vidliboom/` (from vid-liboom) | One script in, a whole cartoon episode out: scene planner, pose-pack characters, shader skies, music, subtitles | `python3 -m vidliboom examples/episode/bablu_mausam.md -o episode.mp4 --format vertical` |
 
-<p align="center"><img src="docs/img/handdrawn.gif" alt="Hand-drawn engine demo, swap-edu pack" width="240"></p>
+<p align="center"><img src="docs/img/handdrawn.gif" alt="Hand-drawn engine demo, swap-edu pack" width="240"> &nbsp; <img src="docs/img/screencast.gif" alt="Screencast tutorial engine demo: Wikipedia in Hindi" width="216"></p>
 
-Docs: [docs/HANDDRAWN.md](docs/HANDDRAWN.md) · [docs/MOTION2D.md](docs/MOTION2D.md) · [docs/EPISODE_SCRIPT.md](docs/EPISODE_SCRIPT.md). Raster art only; the no-SVG rule applies to every engine.
+Docs: [docs/SCREENCAST.md](docs/SCREENCAST.md) · [docs/HANDDRAWN.md](docs/HANDDRAWN.md) · [docs/MOTION2D.md](docs/MOTION2D.md) · [docs/EPISODE_SCRIPT.md](docs/EPISODE_SCRIPT.md). Raster art only; the no-SVG rule applies to every engine.
 
 ---
 
