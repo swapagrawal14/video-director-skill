@@ -1,5 +1,7 @@
 # 2 AM Power Cut (pastel cartoon, 9:16, 12 s, no VO)
 
+<p align="center"><img src="../../docs/img/powercut-cartoon.gif" alt="2 AM Power Cut" width="270"><br><a href="2AM_Power_Cut.mp4">Watch with sound (MP4)</a></p>
+
 A dental student studies at 2 AM, the power goes out, two glowing eyes open on her pillow... and it's the hostel cat.
 Made end to end by an agent with this repo, from one style reference, with no hand animation.
 

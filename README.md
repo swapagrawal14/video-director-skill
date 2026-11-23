@@ -53,6 +53,13 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 <a href="examples/swap-creations-intro/">Source</a> · <a href="docs/LOGO_INTRO.md">How</a> · <code>python3 motion2d/logo_intro.py logo.png out.mp4</code>
 </p>
 
+<p align="center">
+<img src="docs/img/powercut-cartoon.gif" alt="2 AM Power Cut: pastel cartoon short" width="270"><br>
+<b>2 AM Power Cut</b> — pastel cartoon Short (9:16, 12 s, SFX only)<br>
+<i>Exam kal hai, light chali gayi, takiye pe do aankhein... aur nikli hostel ki billi.</i><br>
+<a href="examples/powercut-cartoon/">Source</a> · <a href="examples/powercut-cartoon/2AM_Power_Cut.mp4">Watch with sound (MP4)</a> · <a href="docs/CARTOON.md">How</a>
+</p>
+
 > The horror short above was written, voiced, lit, scored, captioned, graded and QA-checked by an agent using this repo — in under an hour, with **zero paid APIs and zero stock footage.**
 
 ---
