@@ -32,3 +32,11 @@ A style (hand-drawn, clay, paper, 3D toy, 3D) can be paired with almost any trea
 2. Character: master pose from the user's reference, then 5–10 poses (talk, point, explain, hold tool, react,
    thumbs-up) with the master as first reference. Never a single still.
 3. Storyboard sheet (one still per scene) to the USER for a yes. Then render, `motion_qa.py`, deliver.
+
+## Style reference from the user (learned 2026-11-23, labial bow reel)
+When the user sends a style reference image, match it by IMAGE, not by words:
+1. Pass the style reference as the FIRST image input to the image model on every asset. Describing the style in text alone drifts into a generic clean-digital look (rejected twice).
+2. Keep other references minimal: one face/selfie ref for the character, nothing else. Extra photo or old-asset refs dilute the style.
+3. Prompt as "a NEW illustration in EXACTLY the same art style, as if the same artist drew the next page": copy line weight, colouring medium (marker/crayon grain, paper texture), face design, palette, and LOW detail level. Ask for simple shapes and minimal detail; over-detailed scenes read as a different style.
+4. Copy style only; never copy logos, brand marks or text from the reference.
+5. Style test first: render 3 frames (host, set, one panel/prop) and get the user's yes on the vibe before making the pose pack, props and storyboard.
