@@ -20,6 +20,16 @@ python3 -m screencast.make_pack host --base talk.png --pose point=point.png --po
 ```
 The face patches are cut where each edit differs from the base, so the expression never changes on its own. Poses switch on **hard cuts** at beat starts, with a squash-and-settle. Breathing, sway and a talk bob are layered on top. The outro switches to `wave`.
 
+## Camera, cuts, backgrounds, captions (`screencast/fx.py`, all on by default)
+Retention comes from change: something new should land every 2.5 to 3.5 s.
+- **Camera**: each beat gets a slow push-in (1.00 to 1.05), sine drift, a tiny roll, and a punch-in kick on the cut.
+- **Cuts**: every beat boundary gets a transition: `whip` (motion-blur slide), `rip` (torn-paper wipe), `zoomblur` (radial punch) or `flash`. Set it per beat with `"transition"`, otherwise the cuts rotate. The outro uses `"outro_transition"`.
+- **Backgrounds swap on each cut** for contrast: `graph` (paper), `chalk` (dark board), `sun` (yellow halftone), `teal` (stripes), `pink` (confetti). Set one per beat with `"bg"`, or give the whole list with `"backgrounds"`. On a dark background the caption pill flips to light, so the text always contrasts.
+- **Captions** `"fx": {"captions": "box"}`: a rounded pill holding chunks of up to 3 words. Latin words scramble in for 0.12 s. The spoken word is in the beat's accent colour. Devanagari words use Noto Sans Devanagari (shaped with raqm). Use `"karaoke"` for the older outline style.
+- **Finish**: vignette and per-frame grain. **Outro**: FOLLOW badge, a hand-drawn arrow and a sketched play sticker (raster, drawn in code).
+- Turn any of these off with `"fx": {"camera": false, "transitions": false, "bg_rotate": false, "finish": false}`.
+- These assets are a starting kit, not a limit. Generate new raster props, stickers and backgrounds per video (still no SVG or 3D).
+
 ## Run
 ```
 python3 -m screencast capture <proj>     # Playwright -> capture/frames + capture.json (boxes, events, marks)

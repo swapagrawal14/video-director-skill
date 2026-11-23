@@ -17,6 +17,8 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'handdrawn'))
 from hd import load_style, font, text_img, write_on, karaoke, over, ease, hexc, encode  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from screencast import fx  # noqa: E402
 
 ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
 W, H = 720, 1280
@@ -79,11 +81,17 @@ class Reel:
         self.events = [e for e in ev if e.get('box') and e['type'] in ('click', 'type', 'hover', 'scroll_to')]
         self.vw, self.vh = Image.open(f'{self.frames_dir}/00000.png').size
         self.card_scale = (CARD_W - 24) / self.vw
+        self.fx = {'camera': True, 'transitions': True, 'captions': 'box', 'finish': True, **self.S.get('fx', {})}
+        self.cuts = [(self.win[k][0], self.S['beats'][k].get('transition', fx.ROTATION[(k - 1) % len(fx.ROTATION)])) for k in range(1, len(self.win))]
+        self.cuts.append((self.end_t, self.S.get('outro_transition', 'zoomblur')))
         self._load_art()
 
     # ------------------------------------------------------------------ assets
     def _load_art(self):
         self.paper = cv2.resize(np.array(Image.open(f'{ASSETS}/graphpaper.jpg').convert('RGB')), (W, H), interpolation=cv2.INTER_AREA)
+        rot = self.S.get('backgrounds', fx.BG_ROTATION if self.fx.get('bg_rotate', True) else ['graph'])
+        self.bg_kind = [self.S['beats'][k].get('bg', rot[k % len(rot)]) for k in range(len(self.S['beats']))] + [self.S.get('outro_bg', 'sun')]
+        self._bgs = {k: fx.make_bg(k, W, H, self.paper) for k in set(self.bg_kind)}
         self.torn = rgba(f'{ASSETS}/torn_strip.png', 760)
         self.tape = rgba(f'{ASSETS}/tape.png', 200)
         self.cursor = rgba(f'{ASSETS}/cursor_hand.png', 64)
@@ -91,6 +99,8 @@ class Reel:
         self.circle = rgba(f'{ASSETS}/marker_circle.png')
         self.badge = rgba(f'{ASSETS}/follow_badge.png', 460)
         self.hl = rgba(f'{ASSETS}/highlighter.png', 260)
+        self.arrow = rgba(f'{ASSETS}/marker_arrow.png', 170)[:, ::-1].copy()   # flipped to point back at the badge
+        self.play = fx.sketch_play_sticker(150)
         hp = f'{self.p}/host'; pk = json.load(open(f'{hp}/pack.json'))
         self.host_k = self.S.get('host_scale', .46)
         self.poses = {k: rgba(f'{hp}/{v}') for k, v in pk['poses'].items()}
@@ -234,7 +244,23 @@ class Reel:
 
     # ------------------------------------------------------------------ frame
     def frame(self, t):
-        f = self.paper.copy(); k = self.beat_at(min(t, self.end_t - 1e-3)); beat = self.S['beats'][k]
+        """Finished frame: raw layout -> camera -> cut transition -> vignette/grain."""
+        def cam(tt):
+            img = self.raw(tt)
+            if not self.fx['camera']: return img
+            k = self.beat_at(min(tt, self.end_t - 1e-3))
+            a, b = (self.win[k] if tt < self.end_t else (self.end_t, self.end_t + 2.6))
+            return fx.camera(img, tt, a, b)
+        img = None
+        if self.fx['transitions']:
+            for c, kind in self.cuts:
+                if abs(t - c) < .2: img = fx.transition(kind, cam, t, c); break
+        if img is None: img = cam(t)
+        return fx.finish(img, int(t * self.fps)) if self.fx['finish'] else img
+
+    def raw(self, t):
+        k = self.beat_at(min(t, self.end_t - 1e-3)); beat = self.S['beats'][k]
+        bgk = self.bg_kind[-1] if t >= self.end_t else self.bg_kind[k]; f = self._bgs[bgk].copy(); dark = bgk in fx.DARK_BGS
         acc = self.style['sceneAccents'][k % len(self.style['sceneAccents'])]
         # torn strip + title
         sy = 40 - 120 * (1 - back(t / .6)); over(f, self.torn, (W - self.torn.shape[1]) / 2, sy)
@@ -253,10 +279,16 @@ class Reel:
                 x = 30; y = cy - cd.shape[0] / 2 - 62
                 over(f, write_on(hl, ease((t - a) / .4)), x - 15, y + 4)
                 over(f, scaled(si, max(.01, p)), x, y)
-            karaoke(f, self.T['words'], t, {**self.style, 'colors': {**self.col, 'accent': acc['karaoke']}}, 742, size=46)
+            if self.fx['captions'] == 'box':
+                fx.box_captions(f, self.T['words'], t, lambda sz: font(self.style, 'caption', sz), hexc(acc['karaoke']), y=742,
+                                text_img=text_img, over=over, light=dark)
+            else:
+                karaoke(f, self.T['words'], t, {**self.style, 'colors': {**self.col, 'accent': acc['karaoke']}}, 742, size=46)
         else:
             u = t - self.end_t; b = scaled(self.badge, max(.01, back(u / .5)))
             over(f, b, (W - b.shape[1]) / 2, 420 - b.shape[0] / 2)
+            ar = write_on(self.arrow, ease((u - .45) / .4)); over(f, ar, W - ar.shape[1] - 18, 250)
+            pl = rotate(scaled(self.play, max(.01, back((u - .6) / .4))), 12 + 3 * math.sin(t * 3)); over(f, pl, 34, 230)
             end = self.S.get('end', {})
             if end.get('name'):
                 nm = write_on(text_img(end['name'], font(self.style, 'title', 52), hexc(self.col['ink'])), ease((u - .3) / .8))
@@ -267,7 +299,7 @@ class Reel:
         hi, bob = self.host(t, k)
         hy = 790 + bob if t < self.end_t else 790 + bob - 40 * ease((t - self.end_t) / .5)
         over(f, hi, (W - hi.shape[1]) / 2, hy)
-        if t < .2: f[:] = (self.paper * (1 - t / .2) + f * (t / .2)).astype(np.uint8)
+        if t < .2: f[:] = (self._bgs[self.bg_kind[0]] * (1 - t / .2) + f * (t / .2)).astype(np.uint8)
         return f
 
 
