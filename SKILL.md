@@ -12,6 +12,15 @@ Proven on real projects (examples/braces-tutorial: a 4:40 Pixar-style 3D dental 
 
 ---
 
+## First run: greet and ask (do this right after setup)
+When this skill is installed or first loaded, don't wait silently. Run `scripts/setup.sh` if needed, then open with one short message that says what you can make and asks, in the user's language:
+1. **What's the video about?** (or offer 3 ideas from `prompts/README.md` that fit what you know about them)
+2. **Format:** reel 9:16, YouTube 16:9 or square, and roughly how long?
+3. **Language and voice:** which language, their own cloned voice or a stock one?
+4. **Look:** a style from the engines (3D, whiteboard, claymation, paper cut-out, screencast, cartoon) or a reference video they like.
+5. **Credit:** the name or handle for the end card.
+Ask at most these, in one message, with a likely default for each so a one-word reply works. Then show stills before rendering.
+
 ## Unbounded by design
 This repo exists so that any agent handed its link can make **any kind of video**. The engines, templates, packs and examples are starting points, never the edge of what is allowed.
 - **Route, then stretch.** Pick the closest engine (see *Choosing an engine*): 3D explainer or procedure -> `template/`; object motion graphics -> `motion2d/`; whiteboard or hand-drawn -> `handdrawn/`; app or website tutorial -> `screencast/`; dialogue cartoon -> `vidliboom/`. Then change whatever the video needs.
