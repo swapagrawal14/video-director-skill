@@ -50,6 +50,10 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 
 ---
 
+
+## What can I ask for?
+Open [`prompts/`](prompts/README.md) for ready-to-use prompts: tutorials, explainers, stories, promos, science, and ways to remix the engines into something new.
+
 ## 🎭 Painted characters that act (new)
 
 `template/headrig3d.js` (default) and `template/posepack3d.js` bring the [Rigpop Motion](https://github.com/swapagrawal14/rigpop-motion) method into the three.js engine: **pose first, motion second**.
