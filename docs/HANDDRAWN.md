@@ -24,3 +24,6 @@ and everything moves through masks. The look comes from the swap-studio **style 
 4. Render with `python3 render.py <style> out.mp4`, then run `scripts/motion_qa.py out.mp4` and look at the strips before delivering.
 
 `swap-edu` and `swap-ai` are Swapnil's own brand. Don't reuse them for anyone else; use a neutral pack or make a new one.
+
+## Talking host (diff-patch face rig)
+`handdrawn/examples/talking-explainer/` puts a painted cartoon host who talks and blinks under the pen draw-on scenes (a whiteboard tutorial-reel look). The mouth and blink frames are image edits of the one base drawing. Only the changed patch is pasted, so the body never drifts. Mouth shapes follow the VO loudness. Read its README.
