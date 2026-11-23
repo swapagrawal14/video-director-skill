@@ -1,0 +1,160 @@
+{
+ "builtin": {
+  "template": "3D explainers/procedures/horror",
+  "motion2d": "object-action motion graphics, pose packs, SFX",
+  "handdrawn": "whiteboard draw-on reels",
+  "screencast": "browser recording + host",
+  "vidliboom": "dialogue cartoon episode"
+ },
+ "fetch": {
+  "vid-shark": {
+   "repo": "swapagrawal14/vid-shark",
+   "kind": "python",
+   "treatments": [
+    "object-story",
+    "bench-demo"
+   ],
+   "start": "AGENTS.md"
+  },
+  "vid-liboom": {
+   "repo": "swapagrawal14/vid-liboom",
+   "kind": "python",
+   "treatments": [
+    "episode"
+   ],
+   "start": "README.md"
+  },
+  "rigpop-agents": {
+   "repo": "swapagrawal14/rigpop-agents",
+   "kind": "node",
+   "treatments": [
+    "talking-reel"
+   ],
+   "start": "README.md"
+  },
+  "rigpop-motion": {
+   "repo": "swapagrawal14/rigpop-motion",
+   "kind": "node",
+   "treatments": [
+    "episode",
+    "talking-reel"
+   ],
+   "start": "AGENTS.md"
+  },
+  "rigpop-forge": {
+   "repo": "swapagrawal14/rigpop-forge",
+   "kind": "node",
+   "treatments": [
+    "character-pack"
+   ],
+   "start": "AGENTS.md"
+  },
+  "rigpop-ink": {
+   "repo": "swapagrawal14/rigpop-ink",
+   "kind": "node",
+   "treatments": [
+    "footage-restyle"
+   ],
+   "start": "README.md"
+  },
+  "swap-studio": {
+   "repo": "swapagrawal14/swap-studio",
+   "kind": "node",
+   "treatments": [
+    "whiteboard",
+    "branded-reel"
+   ],
+   "start": "AGENTS.md"
+  },
+  "clipcast": {
+   "repo": "swapagrawal14/clipcast-by-swapnilagrawal",
+   "kind": "browser",
+   "treatments": [
+    "audiogram"
+   ],
+   "start": "AI-AUDIOGRAM-DIRECTOR.md"
+  },
+  "rangmanch-ar": {
+   "repo": "swapagrawal14/rangmanch-ar",
+   "kind": "browser",
+   "treatments": [
+    "performance-capture"
+   ],
+   "start": "README.md"
+  },
+  "doodle-mirror": {
+   "repo": "swapagrawal14/doodle-mirror",
+   "kind": "browser",
+   "treatments": [
+    "performance-capture"
+   ],
+   "start": "README.md"
+  },
+  "swap-draws": {
+   "repo": "swapagrawal14/swap-draws",
+   "kind": "browser",
+   "treatments": [
+    "whiteboard"
+   ],
+   "start": "AGENTS.md"
+  },
+  "chalkline": {
+   "repo": "swapagrawal14/chalkline-by-swapnilagrawal",
+   "kind": "browser",
+   "treatments": [
+    "whiteboard"
+   ],
+   "start": "README.md"
+  },
+  "rigpop": {
+   "repo": "swapagrawal14/rigpop",
+   "kind": "browser",
+   "treatments": [
+    "talking-reel"
+   ],
+   "start": "AGENTS.md"
+  },
+  "rigpop-talk": {
+   "repo": "swapagrawal14/rigpop-talk",
+   "kind": "browser",
+   "treatments": [
+    "talking-reel"
+   ],
+   "start": "README.md"
+  },
+  "reelwright-studio": {
+   "repo": "swapagrawal14/reelwright-studio",
+   "kind": "browser",
+   "treatments": [
+    "reel"
+   ],
+   "start": "REEL-JSON-AGENT-PROMPT.md"
+  },
+  "claymation-style-videos": {
+   "repo": "swapagrawal14/claymation-style-videos",
+   "kind": "ai-video",
+   "paid": true,
+   "treatments": [
+    "claymation"
+   ],
+   "start": "README.md"
+  },
+  "zack-d-style-animation-workflow": {
+   "repo": "swapagrawal14/zack-d-style-animation-workflow",
+   "kind": "ai-video",
+   "paid": true,
+   "treatments": [
+    "zack-d-3d-short"
+   ],
+   "start": "README.md"
+  },
+  "2d-hindi-cartoon-video": {
+   "repo": "swapagrawal14/2d-hindi-cartoon-video",
+   "kind": "ai-video",
+   "treatments": [
+    "story-stills"
+   ],
+   "start": "README.md"
+  }
+ }
+}

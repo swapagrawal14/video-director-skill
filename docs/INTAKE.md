@@ -1,6 +1,6 @@
 # Intake: treatments to offer
 
-Offer 3 of these (the ones that fit the topic), one line each, your pick marked, before generating any asset.
+Offer 3 of these (engines for each: `docs/ENGINES.md`) (the ones that fit the topic), one line each, your pick marked, before generating any asset.
 A style (hand-drawn, clay, paper, 3D toy, 3D) can be paired with almost any treatment; keep the user's style.
 
 | # | Treatment | What happens on screen | Engine | Best for |
@@ -13,6 +13,11 @@ A style (hand-drawn, clay, paper, 3D toy, 3D) can be paired with almost any trea
 | 6 | **Screencast tutorial** | Real browser recording on a tilted card + gesturing host | `screencast/` | apps, websites, software |
 | 7 | **Dialogue cartoon** | Characters talk scene to scene from a script | `vidliboom/` | stories, skits, patient-education dialogues |
 | 8 | **Cinematic horror** | Dark grade, slow push, scare structure | `template/` horror recipe | horror shorts |
+| 9 | **Talking-character reel** | 1–2 rigged characters talk, gesture, lip-sync | `rigpop-agents` / `rigpop-motion` | skits, Q&A, hooks |
+| 10 | **Act it out** | The user performs on camera, a cartoon copies them | `rangmanch-ar`, `doodle-mirror` | personal reels |
+| 11 | **Footage restyle** | Real clip redrawn as ink-on-paper | `rigpop-ink` | vlogs, clinical footage, horror |
+| 12 | **Audiogram** | Waveform, captions, cover art over a voice clip | `clipcast` | podcasts, voice notes |
+| 13 | **AI video model** | Clay or Zack-D-style shots from a paid video model | claymation / zack-d workflows | when the user has credits; ask first |
 
 ## The message (example, Hinglish user, "Adams clasp, hand-drawn, 9:16")
 

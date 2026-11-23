@@ -49,6 +49,7 @@ full render. Looking at stills yourself is not approval.
 - Write the action list (t, verb, object, SFX) before coding, and check it against the storyboard.
 
 ## Unbounded by design
+**This repo is the hub of the author's whole video toolkit.** `docs/ENGINES.md` (and `engines.json`) maps every treatment to the best engine across her repos (vid-shark, vid-liboom, the Rigpop family, swap-studio, clipcast, rangmanch-ar, rigpop-ink, AI-video workflows…). Fetch any of them with `scripts/fetch_engine.sh <name>`; this repo still owns intake, VO, timing, mix, QA and delivery.
 This repo exists so that any agent handed its link can make **any kind of video**. The engines, templates, packs and examples are starting points, never the edge of what is allowed.
 - **Route, then stretch.** Pick the closest engine (see *Choosing an engine*): 3D explainer or procedure -> `template/`; object motion graphics -> `motion2d/`; whiteboard or hand-drawn -> `handdrawn/`; app or website tutorial -> `screencast/`; dialogue cartoon -> `vidliboom/`. Then change whatever the video needs.
 - **Mix engines.** Render parts with different engines and cut them together with `scripts/mux.py` / ffmpeg (a screencast inside a hand-drawn explainer, a 3D shot inside a reel).
@@ -185,13 +186,14 @@ python3 scripts/qa.py Graded.mp4 projects/<slug>/captions.ass                   
 - `template/index.html` — scene engine (edit `buildSubject` + `SCENE_FX`).
 - `template/project.json` — content/timing/theme schema with a working 5-scene demo.
 - `scripts/` — setup, new_project, tts_cartesia, tts_free, build_timing, lint, words_project, words_whisper, captions, shot, music, beats, sfx_horror, mix, loudnorm, render, render_all, timeshim.js, mux, chapters, make_lut, grade, export, qa, thumbgrab, thumb.
-- `docs/INTAKE.md` — treatment menu to offer before any asset, action sheet, storyboard approval. `docs/STYLES.md` — genre recipes. `docs/ENGINE.md` — project.json + engine reference. `docs/TROUBLESHOOTING.md`. `docs/CRAFT.md` — render contract, hook/retention, shot list, review loop, banned defaults, horror scare structure, beat cuts. `docs/AUDIO_CAPTIONS.md` — TTS engines, word timings, captions, SFX, mix. `docs/EXPORT_QA.md` — grade, platform presets, QA gate, packaging. `docs/CHARACTERS.md` — painted pose-pack characters (posepack3d.js), hard rules, lip-sync, directing.
+- `docs/ENGINES.md` + `engines.json` + `scripts/fetch_engine.sh` — registry of every engine repo and how to fetch/run it. `docs/INTAKE.md` — treatment menu to offer before any asset, action sheet, storyboard approval. `docs/STYLES.md` — genre recipes. `docs/ENGINE.md` — project.json + engine reference. `docs/TROUBLESHOOTING.md`. `docs/CRAFT.md` — render contract, hook/retention, shot list, review loop, banned defaults, horror scare structure, beat cuts. `docs/AUDIO_CAPTIONS.md` — TTS engines, word timings, captions, SFX, mix. `docs/EXPORT_QA.md` — grade, platform presets, QA gate, packaging. `docs/CHARACTERS.md` — painted pose-pack characters (posepack3d.js), hard rules, lip-sync, directing.
 - `template/headrig3d.js` — DEFAULT for characters: headless painted body poses + one shared painted head (directed brows/eyes/mouth, smoothed lip-sync, eased tilt/nods). Before delivery run `scripts/motion_qa.py` and look at the strips; expression must never change on its own.
 - `template/posepack3d.js` — painted characters the Rigpop Motion way: raster pose packs switched on hard cuts, blink/eye-dart/lip-sync face patches, breath and settle. Never primitive-shape or vector characters. Reference: `docs/CHARACTERS.md`. Demo: `examples/painted-duet/`.
 - `examples/braces-tutorial/` — a complete, real 21-scene production to learn from (models, tools, per-scene FX, labels).
 
 
 ## Choosing an engine
+Full routing table across all her repos: `docs/ENGINES.md`. Built in:
 - three.js engine (`template/`): narrated explainers, horror shorts, painted characters with `headrig3d.js`.
 - `motion2d/`: object-action motion graphics in ANY raster style (claymation, desi illustration, paper cut-out, 3D toy, ink-and-marker hand-drawn). DEFAULT for tutorials and procedures in a 2D look, including "hand-drawn" ones: objects act, pose-pack characters, SFX. Read docs/MOTION2D.md.
 - `handdrawn/`: whiteboard / pen draw-on reels, only when the user picks a whiteboard treatment or for short concept overviews in swap-studio style packs (pen draw-on, boil, write-on, marker swipe, karaoke, end card), plus a talking painted host (`handdrawn/examples/talking-explainer/`, diff-patch face rig). Read docs/HANDDRAWN.md.
