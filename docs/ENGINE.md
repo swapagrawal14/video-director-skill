@@ -8,7 +8,8 @@
 | `language` | TTS language code (`hi`, `en`, …) |
 | `fps` (24), `width` (1280) | output; height = width·9/16 |
 | `music_mood`, `music_gain` | see `scripts/music.py` |
-| `theme` | `accent`, `accent2`, `highlight`, `background` [3 colours top→bottom], `bench`, `mat`, `mascot` |
+| `look` | REQUIRED look sheet: `set`, `palette` [3–5 hex], `character`, `type`, `captions`, `camera`, `signature`, optional `reuse_reason`. Written before any asset; lint fails "CHANGE ME" and clones. See `docs/FRESH_LOOK.md` |
+| `theme` | colours taken from `look.palette`: `accent`, `accent2`, `highlight`, `background` [3 colours top→bottom], `bench`, `mat`, `mascot` |
 | `thumbnail` | `pill`, `big`, `line1`, `line2`, `line3`, `shift`, `edge`, `dark` |
 | `sfx` | `[{ "file": "sfx/boom.wav", "at": 12.3, "gain": 0.6 }]` (seconds on the final timeline) |
 | `scenes[]` | one per scene, below |
@@ -24,7 +25,7 @@
 | `labels` | `[{ "at": [x,y,z], "text": "...", "start": s, "end": s, "dx": 60, "dy": -50, "color": "#hex" }]` (times in seconds into the scene) |
 | `badge` | `{ "text": "15–30 s", "sub": "etch time", "start": 0.5, "secs": 6, "color": "#hex" }` ring fills over `secs` |
 | `list` | `{ "title": "3 Golden Rules", "items": [...], "starts": [1.2, 3.6, …] }` |
-| `mascot` | `"wave" | "hop" | "point" | "idle"`; `mascotPos` [x,y,z] |
+| `mascot` | (template placeholder character; replace it per video, see `docs/FRESH_LOOK.md`) `"wave" | "hop" | "point" | "idle"`; `mascotPos` [x,y,z] |
 | `shot` | `{ "from": [tx,ty,tz,dist,az,el], "to": [...] }` orbit camera, eased across the scene |
 
 Labels anchored to moving parts: do it in code instead — in `renderAt`, after the 3D render, call `label3D(obj.localToWorld(V3(...)), 'Text', alpha)`.

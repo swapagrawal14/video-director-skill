@@ -1,6 +1,20 @@
 {
  "title": "ढाई बजे | 2:30 AM",
  "recipe": "horror",
+ "look": {
+  "set": "old hostel corridor at night: procedural plaster walls, tiled floor, practical bulbs, backlit EXIT sign",
+  "palette": [
+   "#05070a",
+   "#9fb4ff",
+   "#e8e8e8",
+   "#c8a24a"
+  ],
+  "character": "faceless silhouette at the far end of the corridor; only moves while the lights are off",
+  "type": "thin condensed caps, white at 80% opacity, slow fades",
+  "captions": "pop style, light grey active / dark grey idle, no yellow",
+  "camera": "phone-torch POV, slow creeping push, long holds, sudden cut on the scare",
+  "signature": "bulbs die far to near, 0.85 s vacuum, stinger on the exact frame"
+ },
  "credit": "Swapnil Agrawal (BDS intern)",
  "fps": 24,
  "width": 720,

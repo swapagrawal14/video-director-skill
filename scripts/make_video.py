@@ -148,11 +148,15 @@ def preview_times(timing, n=8):
     return sorted(set(ts))
 
 
+LOOK_KEYS = ('set', 'palette', 'character', 'type', 'captions', 'camera', 'signature')
+
+
 def project_skeleton(brief):
     W, H = FORMATS[brief['format']]
     return {'title': brief['topic'], 'language': brief['lang'], 'fps': 24 if brief['format'] == 'youtube' else 30,
             'width': W, 'height': H, 'aspect': [W // _gcd(W, H), H // _gcd(W, H)], 'credit': brief.get('credit') or '',
-            'music_mood': 'calm', 'lufs': -14, '_todo': 'write scenes (see TODO_script.md)', 'scenes': []}
+            'music_mood': 'calm', 'lufs': -14,
+            'look': {k: 'CHANGE ME (docs/FRESH_LOOK.md)' for k in LOOK_KEYS}, '_todo': 'write scenes (see TODO_script.md)', 'scenes': []}
 
 
 def _gcd(a, b):
@@ -280,6 +284,9 @@ Read SKILL.md sections 1-3, docs/INTAKE.md ("After the pick"), docs/STYLES.md (p
 4. Write ACTIONS.md: one row per VO sentence: `t | verb | object | close-up? | SFX`. A sentence with no on-screen verb gets rewritten.
 5. Facts: list every value a human must verify in FACTS.md.
 6. Remove the "_todo" key from project.json. No SVG anywhere.
+7. Fill the "look" block in project.json (docs/FRESH_LOOK.md) BEFORE any asset: set, palette (3-5 hex), character, type,
+   captions, camera, signature. Every video gets its own look; examples/ are a quality bar, never a template.
+   Set "theme" from look.palette. lint.py fails "CHANGE ME", Pixar Clinic default colours and copied sets/mascots.
 """
 
 
@@ -312,8 +319,13 @@ def st_script(c):
                 if not c.dry and not os.path.exists(c.p(f)): os.symlink(os.path.join(ROOT, f), c.p(f))
     P = c.jload('project.json', default={}) or {}
     ok, probs = scenes_ready(P, tpl)
-    if ok and os.path.exists(c.p('ACTIONS.md')): clear_todo(c, 'script'); return 'done', f'{len(P["scenes"])} scenes'
+    lk = P.get('look')
+    look_ok = isinstance(lk, dict) and 'change me' not in json.dumps(lk).lower()
+    if ok and look_ok and os.path.exists(c.p('ACTIONS.md')): clear_todo(c, 'script'); return 'done', f'{len(P["scenes"])} scenes'
     if ok: probs.append('ACTIONS.md (action sheet) missing')
+    lk = P.get('look')
+    if not isinstance(lk, dict) or 'change me' in json.dumps(lk).lower():
+        probs.append('project.json "look" sheet not filled (docs/FRESH_LOOK.md)')
     todo(c, 'script', SCRIPT_TODO.format(**common, target='Fill project.json "scenes" (schema: docs/ENGINE.md; template/project.json has a '
                                          'working demo): each scene "vo" (spoken), "sub" (on screen), optional "chapter", "secs" when silent.')
          + '\nStill open:\n' + '\n'.join(f'- {p}' for p in probs))
@@ -342,7 +354,7 @@ def st_vo(c):
 def st_timing(c):
     if (c.engine or 'template') in OWNS_AUDIO: return 'skipped', 'engine owns timing'
     c.sh(py('build_timing.py', c.d))
-    rc, out = c.sh(py('lint.py', c.d), check=False)
+    rc, out = c.sh(py('lint.py', c.d, '--pre-build'), check=False)
     if rc: raise StageFail('lint.py found errors; fix project.json and re-run (--redo timing)')
     P = c.jload('project.json', default={}) or {}
     if any((s.get('vo') or '').strip() for s in P.get('scenes', [])):

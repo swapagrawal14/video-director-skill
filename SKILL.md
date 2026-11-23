@@ -9,7 +9,7 @@ description: Direct and produce outstanding, fully finished videos on ANY topic 
 > 1. `bash scripts/setup.sh` once (must end with "Setup done.").
 > 2. Ask the brief: topic, format (9:16 / 16:9), language + voice, credit line.
 > 3. Offer 3 treatments (`docs/INTAKE.md`), mark your pick, wait for a choice.
-> 4. Pick the engine (see *Choosing an engine*) and one recipe (`docs/STYLES.md`).
+> 4. Pick the engine (see *Choosing an engine*) and one recipe (`docs/STYLES.md`), then write the look sheet (`docs/FRESH_LOOK.md`).
 > 5. Script -> VO (`tts_free.py` or `tts_cartesia.py`) -> `build_timing.py` -> `lint.py`.
 > 6. Build the scenes; objects act on every VO line. Raster only, never SVG.
 > 7. Storyboard stills (`shot.py`) -> user says yes -> full render (`render_all.py`).
@@ -20,7 +20,7 @@ description: Direct and produce outstanding, fully finished videos on ANY topic 
 You are not "generating a video". You are a **director + 3D artist + editor** shipping a polished film.
 The bar: a viewer should think a small studio made it. Never basic, never a slideshow of text, never stock-looking.
 
-Proven on real projects (examples/braces-tutorial: a 4:40 Pixar-style 3D dental tutorial with Hinglish VO).
+Proven on real projects (examples/braces-tutorial: a 4:40 3D dental tutorial with Hinglish VO). It is a quality reference only, never copy its set, mascot, palette or captions: every video gets its own look (`docs/FRESH_LOOK.md`).
 
 ---
 
@@ -45,6 +45,16 @@ your pick marked. If the user named a style, all 3 use that style. Example for a
 Then show a **storyboard sheet** (one still per scene, `shot.py` / `PREVIEW=`) to the user and get a yes before the
 full render. Looking at stills yourself is not approval.
 
+## Fresh look every video (anti-clone, hard gate, all engines)
+- **Examples are a quality bar, never a template.** Match `examples/braces-tutorial`'s polish, never its wooden bench,
+  "Dentu" tooth mascot, Pixar Clinic colours, title card, step chips or caption pill. Same for the `template/` defaults.
+- **Look sheet before any asset:** set/stage, palette (3-5 hex), hero object, character (or none), type + captions,
+  camera language, signature move -> `project.json` `"look"`, and `theme` from its palette. Starting looks per ortho
+  appliance and the rules: `docs/FRESH_LOOK.md`.
+- Two videos on similar topics (Hawley, Adams clasp, RPE...) must not share a set, palette, character or caption style.
+- `lint.py` fails the build on a missing/placeholder look, the default palette, the default bench/mascot, an
+  `index.html` >85 % identical to the example or template, or VO copied from the example.
+
 ## Not a slideshow (hard gate, all engines)
 - **Objects perform the action the VO describes.** Every VO sentence = a verb on screen: the wire is placed, the
   plier closes, the arrowhead forms, the cast tilts. A drawing that only appears (draw-on, fade, pop) while
@@ -68,6 +78,7 @@ This repo exists so that any agent handed its link can make **any kind of video*
 - **Mix engines.** Render parts with different engines and cut them together with `scripts/mux.py` / ffmpeg (a screencast inside a hand-drawn explainer, a 3D shot inside a reel).
 - **No engine fits? Build one.** Keep only the contracts: picture is a pure function of `t`, VO drives timing, raster only, stills before render, `qa.py` before delivery. Everything else (layout, camera, characters, effects) is yours to write.
 - **Generate assets per video.** Characters, poses, props, backgrounds, stickers, fonts, music and SFX are created for each video's needs (image edits of one base drawing for characters, numpy or code for sound and texture). Shipped assets are a starter kit; reuse them only where they fit.
+- **Logo intros:** any client logo PNG -> `motion2d/logo_intro.py` auto-splits it into parts (shape, fills, letters, sparkles) and builds an animated intro with tagline + SFX. Read `docs/LOGO_INTRO.md`; example `examples/swap-creations-intro/`.
 - **MCP:** `mcp/server.py` exposes this repo as MCP tools (guide, docs, prompts, screencast stages, episode, scripts, qa). Setup in `mcp/README.md`.
 - **Prompt ideas:** `prompts/README.md` lists the kinds of requests this repo is built for; treat them as a floor.
 - **Hard limits stay hard:** no SVG, no 3D-look vector doodles, original or licensed material only, facts verified, nothing personal published without the owner's consent.
@@ -102,7 +113,7 @@ Read `docs/STYLES.md` and pick ONE recipe. Each recipe fixes palette, camera lan
 
 | Recipe | Use for | Music mood |
 |---|---|---|
-| Pixar Clinic (default) | tutorials, procedures, how-things-work | calm / upbeat |
+| Pixar Clinic (one option, not the default look) | tutorials, procedures, how-things-work | calm / upbeat |
 | Blueprint Tech | engineering, software, architecture | lofi |
 | Cinematic Horror | horror shorts, mystery, true crime | horror |
 | Product Hero | launches, promos, app demos | upbeat / epic |
@@ -138,9 +149,9 @@ python3 scripts/words_project.py projects/<slug>   # words.json on the final tim
 
 ## 5. Build the world (index.html) — where quality is won
 
-The template gives you: renderer with ACES tone mapping + soft shadows + environment reflections, bokeh gradient backdrop, wooden bench + mat stage, a mascot with blink/hop/wave/point, orbit camera keys per scene, and the full 2D overlay kit (title card, step chip, 3D-anchored callout labels, timer badge, list cards, subtitles, progress bar, fades).
+The template gives you: renderer with ACES tone mapping + soft shadows + environment reflections, and PLACEHOLDER bokeh backdrop, wooden bench + mat stage and tooth mascot (replace them per video from the look sheet), orbit camera keys per scene, and the full 2D overlay kit (title card, step chip, 3D-anchored callout labels, timer badge, list cards, subtitles, progress bar, fades).
 
-You replace two things:
+You replace the placeholder set, character, colours and overlay styling (look sheet), and two code blocks:
 1. **`buildSubject()`** — the hero model, built from three.js primitives: `LatheGeometry` (teeth, bottles, vases), `ExtrudeGeometry` (plates, gums, logos), `TubeGeometry` on `CatmullRomCurve3` (wires, cables, vessels), deformed `SphereGeometry` (organic shapes). Return named parts.
 2. **`SCENE_FX[i](u, S, t)`** — per-scene animation: tools fly in on eased paths, parts appear with `back()` overshoot, colours/opacity change to show a process, particles for sprays/sparks.
 
@@ -197,12 +208,13 @@ python3 scripts/qa.py Graded.mp4 projects/<slug>/captions.ass                   
 
 ## Files
 - `template/index.html` — scene engine (edit `buildSubject` + `SCENE_FX`).
-- `template/project.json` — content/timing/theme schema with a working 5-scene demo.
+- `template/project.json` — content/timing/theme schema with a working 5-scene demo; its `look` and `theme` are "CHANGE ME" placeholders that lint rejects until filled.
 - `scripts/` — setup, new_project, tts_cartesia, tts_free, build_timing, lint, words_project, words_whisper, captions, shot, music, beats, sfx_horror, mix, loudnorm, render, render_all, timeshim.js, mux, chapters, make_lut, grade, export, qa, thumbgrab, thumb.
 - `docs/ENGINES.md` + `engines.json` + `scripts/fetch_engine.sh` — registry of every engine repo and how to fetch/run it. `docs/INTAKE.md` — treatment menu to offer before any asset, action sheet, storyboard approval, and how to match a user style reference (reference image as first input, 3-frame style test). `docs/STYLES.md` — genre recipes. `docs/ENGINE.md` — project.json + engine reference. `docs/TROUBLESHOOTING.md`. `docs/CRAFT.md` — render contract, hook/retention, shot list, review loop, banned defaults, horror scare structure, beat cuts. `docs/AUDIO_CAPTIONS.md` — TTS engines, word timings, captions, SFX, mix. `docs/EXPORT_QA.md` — grade, platform presets, QA gate, packaging. `docs/CHARACTERS.md` — painted pose-pack characters (posepack3d.js), hard rules, lip-sync, directing.
 - `template/headrig3d.js` — DEFAULT for characters: headless painted body poses + one shared painted head (directed brows/eyes/mouth, smoothed lip-sync, eased tilt/nods). Before delivery run `scripts/motion_qa.py` and look at the strips; expression must never change on its own.
 - `template/posepack3d.js` — painted characters the Rigpop Motion way: raster pose packs switched on hard cuts, blink/eye-dart/lip-sync face patches, breath and settle. Never primitive-shape or vector characters. Reference: `docs/CHARACTERS.md`. Demo: `examples/painted-duet/`.
-- `examples/braces-tutorial/` — a complete, real 21-scene production to learn from (models, tools, per-scene FX, labels).
+- `examples/braces-tutorial/` — quality reference only, never copy its set, mascot, palette or captions. A complete 21-scene production to learn craft from (models, tools, per-scene FX, labels).
+- `docs/FRESH_LOOK.md` — the anti-clone rule, the mandatory look sheet, and distinct starting looks for common ortho appliances.
 
 
 ## Choosing an engine

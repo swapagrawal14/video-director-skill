@@ -22,7 +22,7 @@ ENGINES = {'screencast': 'python3 -m screencast <stage> <proj>', 'vidliboom': 'p
 TOOLS = [
     {'name': 'guide', 'description': 'Read SKILL.md, the director playbook. Call this first, then follow its First run section (ask the user what video they want).',
      'inputSchema': {'type': 'object', 'properties': {}}},
-    {'name': 'read_doc', 'description': 'Read a doc from docs/ (e.g. SCREENCAST, HANDDRAWN, MOTION2D, CRAFT, ENGINE, CHARACTERS, AUDIO_CAPTIONS, EXPORT_QA, STYLES, EPISODE_SCRIPT).',
+    {'name': 'read_doc', 'description': 'Read a doc from docs/ (e.g. SCREENCAST, HANDDRAWN, MOTION2D, CRAFT, ENGINE, CHARACTERS, AUDIO_CAPTIONS, EXPORT_QA, STYLES, FRESH_LOOK, EPISODE_SCRIPT).',
      'inputSchema': {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'required': ['name']}},
     {'name': 'prompt_ideas', 'description': 'Ready-to-use video prompt ideas (tutorials, explainers, stories, promos, science, remixes).',
      'inputSchema': {'type': 'object', 'properties': {}}},

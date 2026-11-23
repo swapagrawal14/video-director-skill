@@ -5,6 +5,9 @@
   Deterministic: window.renderAt(t) draws exactly one frame for time t (seconds).
   Data comes from project.json (content) + timing.json (built by scripts/build_timing.py).
   Replace buildSubject() and SCENE_FX with your topic's 3D models and animations.
+  FRESH LOOK (docs/FRESH_LOOK.md): the backdrop, wooden bench + mat, tooth mascot, colours and overlay styling below
+  are PLACEHOLDERS that show the engine works. Replace them per video from the project's "look" sheet.
+  examples/braces-tutorial is a quality bar only; never copy its set, mascot, palette or captions. lint.py fails clones.
 -->
 <style>
 @font-face{font-family:Baloo;src:url(fonts/baloo2.ttf);font-weight:400 800}
@@ -71,7 +74,10 @@ const M = (color, o = {}) => new THREE.MeshPhysicalMaterial({ color, roughness: 
 const STEEL = new THREE.MeshPhysicalMaterial({ color: '#f4f7fa', metalness: .7, roughness: .26, clearcoat: .6, envMapIntensity: 1.8 });
 const shadowAll = o => o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
 
-/* ---------- stage: wooden bench + mat ---------- */
+/* ---------- stage: PLACEHOLDER wooden bench + mat ----------
+   Replace with this video's own set from look.set (clinic tray, lab counter, X-ray lightbox, mouth interior,
+   blueprint grid, kitchen table...), or hide it (bench.visible = mat.visible = false).
+   lint.py fails a built project that keeps this wood texture with the bench visible. */
 const bench = new THREE.Mesh(new THREE.BoxGeometry(900, 20, 600), M('#ffffff', { roughness: .45, clearcoat: .6 }));
 bench.position.set(0, -36, 40); bench.receiveShadow = true; scene.add(bench);
 {
@@ -98,7 +104,10 @@ function buildSubject() {
 }
 const subject = buildSubject();
 
-/* ---------- mascot (tooth "Dentu" by default; swap shape for your topic) ---------- */
+/* ---------- mascot: PLACEHOLDER tooth character, replace per video ----------
+   Design this video's own character from look.character (or use none and drop "mascot" from scenes).
+   Painted pose packs (headrig3d.js / posepack3d.js) are preferred for hosts. lint.py fails a built project that
+   keeps this default tooth while scenes use "mascot". */
 const mascot = (() => {
   const g = new THREE.Group(); const body = new THREE.Group(); g.add(body);
   const white = M(TH.mascot || '#fbf8f2', { roughness: .32, clearcoat: .8, clearcoatRoughness: .15, sheen: .5, sheenColor: '#ffffff' });
@@ -146,7 +155,7 @@ const SCENE_FX = {
   2: (u) => { SP.core.rotation.y = u * .8; SP.ring.rotation.y = u * 1.4; },
 };
 
-/* ---------- 2D overlay kit ---------- */
+/* ---------- 2D overlay kit (restyle cards, chips, labels and captions per look.type / look.captions) ---------- */
 function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 function card(x, y, w, h, alpha, fillCol = 'rgba(255,253,248,0.96)', r = 18) { g2.save(); g2.globalAlpha *= alpha; g2.shadowColor = 'rgba(20,30,50,.28)'; g2.shadowBlur = 24 * K; g2.shadowOffsetY = 8 * K; g2.fillStyle = fillCol; rr(g2, x, y, w, h, r); g2.fill(); g2.restore(); }
 const F = (wt, px) => `${wt} ${Math.round(px * K)}px Baloo`;

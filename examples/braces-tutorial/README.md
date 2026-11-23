@@ -1,5 +1,7 @@
 # Example: Braces — Bonding se Debonding tak (4:40, 21 scenes, Hinglish)
 
+**Quality reference only — do not copy its set, mascot, colours or caption style.** Every new video gets its own look (`docs/FRESH_LOOK.md`); `lint.py` fails clones.
+
 A complete real production made with this skill. Study it for:
 - a detailed hero model built from primitives (typodont: gums, both arches, 28 teeth via deformed spheres, brackets, molar tubes, archwire tubes),
 - instruments (handpieces, syringes, pliers, curing light, height gauge) and how they travel to the subject,

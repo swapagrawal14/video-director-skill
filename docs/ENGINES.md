@@ -14,6 +14,7 @@ Machine-readable copy: `engines.json`. Built-in engines live in this repo; the r
 | `template/` | 3D explainers, procedures, horror, painted 3D-stage characters (`headrig3d.js`) | `scripts/new_project.sh` |
 | `motion2d/` | objects perform actions, pose-pack characters, SFX; any raster style | `docs/MOTION2D.md` |
 | `motion2d/` doodle preset | flat 2D motion-doodle reels: logo stings, rubber-hose line-art, pastel cel loops, beat-synced, seamless | `docs/MOTION_DOODLE.md` |
+| `motion2d/logo_intro.py` | logo intros from ANY client logo: auto-splits the raster logo into parts and builds it with pops, letter bounces, sparkles, tagline, SFX | `docs/LOGO_INTRO.md` |
 | `handdrawn/` | whiteboard pen draw-on reels, talking painted host | `docs/HANDDRAWN.md` |
 | `screencast/` | browser recording on a tilted card + gesturing host | `python3 -m screencast all <proj>` |
 | `vidliboom/` | dialogue cartoon episode from script.md | `python3 -m vidliboom script.md -o out.mp4` |

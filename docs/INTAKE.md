@@ -28,6 +28,8 @@ A style (hand-drawn, clay, paper, 3D toy, 3D) can be paired with almost any trea
 > Kaunsa?
 
 ## After the pick
+0. Look sheet (`docs/FRESH_LOOK.md`): set, palette, hero object, character, type + captions, camera, signature move,
+   written into `project.json` `look` before any asset. Never reuse the look of an example or an earlier video.
 1. Action sheet: one row per VO sentence: `t, verb, object, close-up?, SFX`. No verb = rewrite the sentence.
 2. Character: master pose from the user's reference, then 5–10 poses (talk, point, explain, hold tool, react,
    thumbs-up) with the master as first reference. Never a single still.

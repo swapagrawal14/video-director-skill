@@ -1,17 +1,18 @@
 # Genre recipes
 
-Pick one. Each recipe sets `theme`, camera language, pacing, overlays, music and type. Put the theme values into `project.json`.
+Pick one. Each recipe sets camera language, pacing, overlays, music and type. Recipes are starting points: the colours, set and character come from this video's look sheet (`docs/FRESH_LOOK.md`), put into `project.json` `look` + `theme`.
 
 ---
 
-## 1. Pixar Clinic (default for tutorials & procedures)
+## 1. Pixar Clinic (one option for tutorials & procedures, not the default for every dental video)
+> Pick it only when it fits; most dental videos need their own set and palette (`docs/FRESH_LOOK.md`). Even with this recipe, build a new set, character and caption style: the example below is a quality reference only.
 - **Look**: soft clearcoat plastics, warm key + cool rim, bokeh teal-to-peach backdrop, wooden bench + coloured mat. Chunky rounded models (typodont, organs, devices) slightly stylised but anatomically/technically correct.
 - **Theme**: accent `#e2475b`, accent2 `#3b82c4`, highlight `#ffd23f`, background `["#24557a","#5fa6b8","#f2cfa8"]`.
 - **Camera**: slow orbits 10–25°, push-in for every detail step, wide shot for "armamentarium"/parts.
 - **Overlays**: step chip ("STEP 3 / 12 · BONDING"), 3D callout labels, timer badge for durations, list cards for rules.
 - **Pacing**: 9–14 s scenes. Mascot at intro, rules, outro.
 - **Music**: `calm` (or `upbeat` for younger audience), gain 0.5–0.6.
-- **Example**: `examples/braces-tutorial`.
+- **Example (quality reference only, never copy its set, mascot, colours or captions)**: `examples/braces-tutorial`. Using these exact theme colours needs `look.reuse_reason` or lint fails.
 
 ## 2. Blueprint Tech (engineering, software, systems)
 - **Look**: dark navy `#0b1a2e` background (set `background` to three navy tones), cyan wireframe edges (`EdgesGeometry` + `LineBasicMaterial`) over matte solids, grid floor (`GridHelper`), glowing data packets (small emissive spheres moving along `CatmullRomCurve3`).

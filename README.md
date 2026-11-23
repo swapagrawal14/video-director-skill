@@ -46,6 +46,13 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 </tr>
 </table>
 
+<p align="center">
+<img src="docs/img/swap-creations-intro.gif" alt="Swap Creations logo intro" width="240"><br>
+<b>Swap Creations</b> — logo intro (9:16, 15 s)<br>
+<i>Give any logo: the tool breaks it into parts (shape, colours, letters, sparkles) and animates the intro.</i><br>
+<a href="examples/swap-creations-intro/">Source</a> · <a href="docs/LOGO_INTRO.md">How</a> · <code>python3 motion2d/logo_intro.py logo.png out.mp4</code>
+</p>
+
 > The horror short above was written, voiced, lit, scored, captioned, graded and QA-checked by an agent using this repo — in under an hour, with **zero paid APIs and zero stock footage.**
 
 ---
