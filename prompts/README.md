@@ -49,3 +49,17 @@ Then ask for anything. The engines are starting points, so mix, stretch and inve
 - Ask for **stills first** to approve the look before the full render.
 - For facts (medical, legal, technical), ask the agent to **list every value for you to verify**.
 - Use only material you own or are allowed to use; ask the agent to blur anything personal.
+
+## Cartoons in any art style (`motion2d/cartoon.py`, playbook `docs/CARTOON.md`)
+No animation knowledge needed: say the idea and a look (a style name or a screenshot), the agent asks the rest.
+- "Make a cute 20 s cartoon: a sleepy girl turns off the lamp and her clothes on the hook look like ghosts, then the light comes back. Pastel style, no voice."
+- "Here's a screenshot of a cartoon style I love. Make a 30 s short in that look about a cat stealing my chai. Don't copy their characters."
+- "A 6 s seamless loop of a boy riding a bicycle around a tiny planet, flat motion-design style, for Instagram."
+- "1930s rubber-hose style cartoon of a toothbrush and a cavity having a boxing match, 30 s, bouncy music."
+- "Anime-style emotional 40 s short: a student waiting for exam results at night, rain on the window."
+- "Chibi sticker mascot for my channel: make it wave, laugh and facepalm, then a 10 s intro with it."
+- "Dark cartoon horror, adult and properly scary: a power cut in an old house, something stands in the corridor. 45 s, 9:16."
+- "Crayon kid-drawing style bedtime story about a lost star, 1 minute, soft Hindi narration."
+- "Desi gouache style 3-shot episode: a Diwali evening at home, mummy, papa and a naughty kid, hard cuts between shots."
+- "Ek chhota cartoon banao: power cut hota hai, kamre mein sab dark ho jata hai aur almirah ke kapde bhoot jaise lagte hain. Cute pastel style, 20 second, voice nahi chahiye."
+- "Mere is reference video jaisa style le lo (sirf look, characters nahi) aur ek 30 sec reel banao jisme ek dentist ka chashma gum ho jata hai. Hinglish voice."
