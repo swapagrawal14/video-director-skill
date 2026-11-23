@@ -27,6 +27,7 @@ This repo exists so that any agent handed its link can make **any kind of video*
 - **Mix engines.** Render parts with different engines and cut them together with `scripts/mux.py` / ffmpeg (a screencast inside a hand-drawn explainer, a 3D shot inside a reel).
 - **No engine fits? Build one.** Keep only the contracts: picture is a pure function of `t`, VO drives timing, raster only, stills before render, `qa.py` before delivery. Everything else (layout, camera, characters, effects) is yours to write.
 - **Generate assets per video.** Characters, poses, props, backgrounds, stickers, fonts, music and SFX are created for each video's needs (image edits of one base drawing for characters, numpy or code for sound and texture). Shipped assets are a starter kit; reuse them only where they fit.
+- **MCP:** `mcp/server.py` exposes this repo as MCP tools (guide, docs, prompts, screencast stages, episode, scripts, qa). Setup in `mcp/README.md`.
 - **Prompt ideas:** `prompts/README.md` lists the kinds of requests this repo is built for; treat them as a floor.
 - **Hard limits stay hard:** no SVG, no 3D-look vector doodles, original or licensed material only, facts verified, nothing personal published without the owner's consent.
 

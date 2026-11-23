@@ -51,6 +51,9 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 ---
 
 
+## Use it as an MCP server
+Run the repo from Claude Desktop, Cursor, Claude Code or any MCP client: see [`mcp/`](mcp/README.md). One file, no extra dependencies.
+
 ## What can I ask for?
 Open [`prompts/`](prompts/README.md) for ready-to-use prompts: tutorials, explainers, stories, promos, science, and ways to remix the engines into something new.
 
