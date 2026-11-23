@@ -101,6 +101,7 @@ class Reel:
         self.hl = rgba(f'{ASSETS}/highlighter.png', 260)
         self.arrow = rgba(f'{ASSETS}/marker_arrow.png', 170)[:, ::-1].copy()   # flipped to point back at the badge
         self.play = fx.sketch_play_sticker(150)
+        self._stickers = {}
         hp = f'{self.p}/host'; pk = json.load(open(f'{hp}/pack.json'))
         self.host_k = self.S.get('host_scale', .46)
         self.poses = {k: rgba(f'{hp}/{v}') for k, v in pk['poses'].items()}
@@ -155,6 +156,9 @@ class Reel:
     # ------------------------------------------------------------------ layers
     def card(self, t):
         ct, k = self.cap_time(t); beat = self.S['beats'][k]; img = self.frame_img(ct)
+        for bx in self.S.get('blur', []) + beat.get('blur', []):   # redact emails, names, keys: [x, y, w, h] in capture px
+            x, y, w, h = map(int, bx); x0_, y0_ = max(0, x), max(0, y)
+            if w > 0 and h > 0: img[y0_:y + h, x0_:x + w] = cv2.GaussianBlur(img[y0_:y + h, x0_:x + w], (0, 0), max(6, h / 3))
         evs = self.beat_events(k)
         # zoom window
         z = 1
@@ -284,6 +288,15 @@ class Reel:
                                 text_img=text_img, over=over, light=dark)
             else:
                 karaoke(f, self.T['words'], t, {**self.style, 'colors': {**self.col, 'accent': acc['karaoke']}}, 742, size=46)
+            st = beat.get('sticker')
+            if st:   # {"text": "FREE!", "at": .5, "color": "#ffd23f", "x": .78, "y": 215, "tilt": -8}
+                key = (k, st['text'])
+                if key not in self._stickers:
+                    self._stickers[key] = fx.text_sticker(st['text'], font(self.style, 'title', st.get('size', 44)), text_img, st.get('color', '#ffd23f'), seed=k)
+                u = t - self.win[k][0] - float(st.get('at', .5))
+                if u > 0:
+                    sk = rotate(scaled(self._stickers[key], max(.01, back(u / .35))), st.get('tilt', -8) + 2 * math.sin(t * 2.5))
+                    over(f, sk, W * st.get('x', .78) - sk.shape[1] / 2, st.get('y', 215) - sk.shape[0] / 2)
         else:
             u = t - self.end_t; b = scaled(self.badge, max(.01, back(u / .5)))
             over(f, b, (W - b.shape[1]) / 2, 420 - b.shape[0] / 2)

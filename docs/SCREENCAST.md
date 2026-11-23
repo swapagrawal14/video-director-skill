@@ -28,7 +28,14 @@ Retention comes from change: something new should land every 2.5 to 3.5 s.
 - **Captions** `"fx": {"captions": "box"}`: a rounded pill holding chunks of up to 3 words. Latin words scramble in for 0.12 s. The spoken word is in the beat's accent colour. Devanagari words use Noto Sans Devanagari (shaped with raqm). Use `"karaoke"` for the older outline style.
 - **Finish**: vignette and per-frame grain. **Outro**: FOLLOW badge, a hand-drawn arrow and a sketched play sticker (raster, drawn in code).
 - Turn any of these off with `"fx": {"camera": false, "transitions": false, "bg_rotate": false, "finish": false}`.
-- These assets are a starting kit, not a limit. Generate new raster props, stickers and backgrounds per video (still no SVG or 3D).
+
+## Sound, stickers, redaction
+- **SFX** (`screencast/sfx.py`, `python3 -m screencast sfx <proj>`): every sound is synthesized in numpy, so it is original and needs no sample licence. Cuts get a whoosh (whip, zoomblur), a paper rip (rip) or a shimmer (flash). Clicks get a click, typed fields get key ticks, STEP chips and stickers get a pop, and the outro gets a riser and a ding. The result is `mix_sfx.wav`, which `render` uses when it exists. Silence one beat with `"sfx": false`. Audition the kit with `python3 -m screencast.sfx demo <dir>`.
+- **Word stickers**: `"sticker": {"text": "1 CLICK", "at": .4, "color": "#ffd23f", "x": .78, "y": 215, "tilt": -8}` on a beat pops a die-cut starburst with a pop sound. Any word or colour; it is drawn in code per video.
+- **Redaction**: `"blur": [[x, y, w, h], ...]` (capture pixels) on a beat, or at the top level for the whole video, blurs emails, names, API keys or account details before zoom. Always redact anything personal that shows up in a capture.
+
+## Assets are a starting kit, not a limit
+Nothing in `screencast/assets/` is fixed. An agent making a video should generate whatever that video needs: new host characters and poses (image edits of one base drawing), props, stickers, backgrounds, cursors, badges and sounds, raster only (no SVG, no 3D). Add a new background kind to `fx.make_bg`, a new cue to `sfx.make`, or a new pose to the host pack whenever the script calls for one. Reuse the kit only where it already fits.
 
 ## Run
 ```

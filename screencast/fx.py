@@ -162,6 +162,24 @@ def sketch_play_sticker(size=150, seed=4):
     return im.astype(np.float32)
 
 
+def text_sticker(text, fnt, text_img, color='#ffd23f', seed=0):
+    """Raster die-cut word sticker (FREE!, NEW, 1 CLICK): a jagged starburst in `color`, dark outline,
+    white border, bold ink text. Drawn in code per video, so any word or colour works."""
+    rng = np.random.default_rng(seed); ti = text_img(text, fnt, (25, 20, 20, 255))
+    th, tw = ti.shape[:2]; rx, ry = tw * .5 + 46, th * .5 + 40; s = int(2 * max(rx, ry) + 40)
+    im = np.zeros((s, s, 4), np.uint8); c = s / 2; n = 22
+    ang = np.linspace(0, 2 * np.pi, n * 2, endpoint=False)
+    rr = np.where(np.arange(n * 2) % 2 == 0, 1.0, .82) * rng.uniform(.95, 1.05, n * 2)
+    pts = np.stack([c + rx * rr * np.cos(ang), c + ry * rr * np.sin(ang)], 1).astype(np.int32)
+    col = tuple(int(color.lstrip('#')[i:i + 2], 16) for i in (0, 2, 4))
+    cv2.fillPoly(im, [pts], (255, 255, 255, 255), cv2.LINE_AA); cv2.polylines(im, [pts], True, (255, 255, 255, 255), 16, cv2.LINE_AA)
+    inner = (c + (pts - c) * .93).astype(np.int32)
+    cv2.fillPoly(im, [inner], (*col, 255), cv2.LINE_AA); cv2.polylines(im, [inner], True, (40, 20, 20, 255), 3, cv2.LINE_AA)
+    im = im.astype(np.float32); y0, x0 = int(c - th / 2), int(c - tw / 2); a = ti[..., 3:4] / 255
+    im[y0:y0 + th, x0:x0 + tw, :3] = im[y0:y0 + th, x0:x0 + tw, :3] * (1 - a) + ti[..., :3] * a
+    return im
+
+
 # ---------------------------------------------------------------- per-beat backgrounds (contrast rotation)
 BG_ROTATION = ['graph', 'chalk', 'sun', 'graph', 'teal', 'chalk', 'pink']
 DARK_BGS = {'chalk', 'teal'}

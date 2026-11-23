@@ -3,6 +3,7 @@
   python3 -m screencast capture <proj>          # browser steps from script.json -> capture/
   python3 -m screencast voice   <proj>          # VO per beat -> vo/sNN.wav (Cartesia if CARTESIA_VOICE_ID/voice_id set, else edge-tts)
   python3 -m screencast build   <proj>          # timeline.json + vo_full.wav + music + mix.wav (-14 LUFS, ducked)
+  python3 -m screencast sfx     <proj>          # procedural SFX on cuts/clicks/typing/stickers -> mix_sfx.wav
   python3 -m screencast stills  <proj> 1 5 9    # preview frames -> <proj>/shots/  (LOOK at them)
   python3 -m screencast render  <proj> [out.mp4] [--jobs 2]   # chunked render + mux, 1080x1920
   python3 -m screencast all     <proj> [out.mp4]
@@ -86,12 +87,13 @@ def stills(proj, ts):
 
 def render(proj, out=None, jobs=2):
     sys.path.insert(0, ROOT); from screencast.compose import total_frames
+    audio = f'{proj}/mix_sfx.wav' if os.path.exists(f'{proj}/mix_sfx.wav') else f'{proj}/mix.wav'
     out = out or f'{proj}/final.mp4'; n = total_frames(proj); step = -(-n // jobs); tmp = f'{proj}/chunks'; os.makedirs(tmp, exist_ok=True)
     code = "import sys; sys.path.insert(0, %r); from screencast.compose import render; render(%r, %d, %d, %r)"
     ps = [subprocess.Popen([sys.executable, '-c', code % (ROOT, proj, i * step, min(n, (i + 1) * step), f'{tmp}/c{i}.mp4')]) for i in range(jobs)]
     if any(p.wait() for p in ps): raise SystemExit('a render chunk failed; re-run')
     open(f'{tmp}/list.txt', 'w').write(''.join(f"file 'c{i}.mp4'\n" for i in range(jobs)))
-    subprocess.run(['ffmpeg', '-y', '-v', 'error', '-f', 'concat', '-safe', '0', '-i', f'{tmp}/list.txt', '-i', f'{proj}/mix.wav',
+    subprocess.run(['ffmpeg', '-y', '-v', 'error', '-f', 'concat', '-safe', '0', '-i', f'{tmp}/list.txt', '-i', audio,
                     '-vf', 'scale=1080:1920:flags=lanczos', '-c:v', 'libx264', '-crf', '18', '-pix_fmt', 'yuv420p',
                     '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out], check=True)
     print('wrote', out)
@@ -105,8 +107,12 @@ if __name__ == '__main__':
     if cmd == 'capture': capture(proj)
     elif cmd == 'voice': voice(proj)
     elif cmd == 'build': build(proj)
+    elif cmd == 'sfx':
+        sys.path.insert(0, ROOT); from screencast.sfx import mix; mix(proj)
     elif cmd == 'stills': stills(proj, rest or ['1', '5', '9'])
     elif cmd == 'render': render(proj, rest[0] if rest else None, jobs)
     elif cmd == 'all':
-        capture(proj); voice(proj); build(proj); render(proj, rest[0] if rest else None, jobs)
+        capture(proj); voice(proj); build(proj)
+        sys.path.insert(0, ROOT); from screencast.sfx import mix; mix(proj)
+        render(proj, rest[0] if rest else None, jobs)
     else: sys.exit(__doc__)
