@@ -1,0 +1,57 @@
+{
+ "poses": {
+  "talk": "talk.png",
+  "point": "point.png",
+  "wave": "wave.png"
+ },
+ "mouth": {
+  "rest": {
+   "file": "mouth.rest.png",
+   "x": 206,
+   "y": 184,
+   "w": 154,
+   "h": 106
+  },
+  "A": {
+   "file": "mouth.A.png",
+   "x": 206,
+   "y": 184,
+   "w": 154,
+   "h": 106
+  },
+  "O": {
+   "file": "mouth.O.png",
+   "x": 206,
+   "y": 184,
+   "w": 154,
+   "h": 106
+  },
+  "E": {
+   "file": "mouth.E.png",
+   "x": 206,
+   "y": 184,
+   "w": 154,
+   "h": 106
+  }
+ },
+ "crop": [
+  420,
+  91,
+  920,
+  768
+ ],
+ "blink": {
+  "file": "blink.png",
+  "x": 207,
+  "y": 121,
+  "w": 155,
+  "h": 52
+ },
+ "eyes_rest": {
+  "file": "eyes.rest.png",
+  "x": 207,
+  "y": 121,
+  "w": 155,
+  "h": 52
+ }
+}
