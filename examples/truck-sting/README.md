@@ -16,4 +16,4 @@ the fastest drawings -> 1.5 brake squeak + nose dip + dust cloud + boing -> 2.0 
 5.5 end chord. Exhaust putts on 2.5/3.5/4.5/5.5.
 
 Look: tangerine paper `#FF8F45`, cream `#FFF3D6`, cobalt `#2D5BD3`, sun `#FFC93C`, coral `#FF5A5F`, ink `#1A1423`.
-"ZIPZOOM" and the truck are original. How it works: `docs/HAND_DRAWN.md`. Credit: Swapnil Agrawal (BDS intern).
+"ZIPZOOM" and the truck are original. How it works: `docs/HANDDRAWN_FINISH.md`. Credit: Swapnil Agrawal (BDS intern).

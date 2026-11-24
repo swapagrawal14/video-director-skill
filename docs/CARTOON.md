@@ -306,4 +306,9 @@ with `bob = 6 * loop.csin(t, L, k=8)`: the built-in raw-`t` breathing would brea
 Render one warm-up loop and export the second pass (keeps `Cast` pop state identical at the seam); then
 `assert_seamless`, `music_for_loop(..., after=4.0)`, `export_loop(frames, 'ride.mp4', repeat=3, audio='loop.wav')`.
 
+## Gotchas learned on `examples/powercut-cartoon`
+- Image models return **RGB with the green screen baked in**. Run `posepack.chroma_key(im)` (float maths, then despill) and `drop_specks(im)` on every pose/prop before `check_registration`; coverage ~0.99 means the key failed.
+- SFX-only mixes (thunder, stingers) fail qa.py true peak with plain loudnorm: use `scripts/loudnorm.py in.wav out.wav -14 -1.0 --tame`.
+- A ceiling fan from a top-down blade PNG reads right if you rotate it, then squash it to ~0.26 height for perspective; integrate the rpm for wind-down/up instead of `spin(t)`.
+
 Credit: Swapnil Agrawal (BDS intern)

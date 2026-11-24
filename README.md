@@ -53,7 +53,7 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 <a href="examples/swap-creations-intro/">Source</a> · <a href="docs/LOGO_INTRO.md">How</a> · <code>python3 motion2d/logo_intro.py logo.png out.mp4</code>
 </p>
 
-<p align="center"><img src="docs/img/truck-sting.gif" alt="ZIPZOOM truck sting: hand-drawn finish" width="240"><br><b>ZIPZOOM</b> — hand-drawn truck sting (9:16, 6 s, fully procedural): on twos, line boil, wobbly re-inked outlines, marker fills, paper grain · <a href="examples/truck-sting/">Source</a> · <a href="docs/HAND_DRAWN.md">How</a></p>
+<p align="center"><img src="docs/img/truck-sting.gif" alt="ZIPZOOM truck sting: hand-drawn finish" width="240"><br><b>ZIPZOOM</b> — hand-drawn truck sting (9:16, 6 s, fully procedural): on twos, line boil, wobbly re-inked outlines, marker fills, paper grain · <a href="examples/truck-sting/">Source</a> · <a href="docs/HANDDRAWN_FINISH.md">How</a></p>
 
 <p align="center">
 <img src="docs/img/powercut-cartoon.gif" alt="2 AM Power Cut: pastel cartoon short" width="270"><br>
@@ -118,7 +118,7 @@ Try: *"a 9:16 Hindi horror short about a hostel lift that stops at a floor that 
 
 <p align="center"><img src="docs/img/handdrawn.gif" alt="Hand-drawn engine demo, swap-edu pack" width="240"> &nbsp; <img src="docs/img/screencast.gif" alt="Screencast tutorial engine demo: Wikipedia in Hindi" width="216"></p>
 
-Docs: [docs/SCREENCAST.md](docs/SCREENCAST.md) · [docs/HANDDRAWN.md](docs/HANDDRAWN.md) · [docs/MOTION2D.md](docs/MOTION2D.md) · [docs/MOTION_DOODLE.md](docs/MOTION_DOODLE.md) · [docs/CARTOON.md](docs/CARTOON.md) · [docs/ARTSTYLES.md](docs/ARTSTYLES.md) · [docs/EPISODE_SCRIPT.md](docs/EPISODE_SCRIPT.md). Raster art only; the no-SVG rule applies to every engine.
+Docs: [docs/SCREENCAST.md](docs/SCREENCAST.md) · [docs/HANDDRAWN.md](docs/HANDDRAWN.md) · [docs/HANDDRAWN_FINISH.md](docs/HANDDRAWN_FINISH.md) · [docs/MOTION2D.md](docs/MOTION2D.md) · [docs/MOTION_DOODLE.md](docs/MOTION_DOODLE.md) · [docs/CARTOON.md](docs/CARTOON.md) · [docs/ARTSTYLES.md](docs/ARTSTYLES.md) · [docs/EPISODE_SCRIPT.md](docs/EPISODE_SCRIPT.md). Raster art only; the no-SVG rule applies to every engine.
 
 ---
 

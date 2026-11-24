@@ -1,5 +1,7 @@
 # Hand-drawn / whiteboard engine (`handdrawn/`)
 
+> Not the frame-by-frame finish: for on-twos boil, re-inked outlines and paper grain on motion2d/cartoon reels (`motion2d/handdrawn.py`), read `docs/HANDDRAWN_FINISH.md`.
+
 Raster-only hand-drawn animation: no SVG, no vector shapes, no code-drawn doodles. Every element is a PNG
 (AI-painted line art made with the pack's `imageStylePrompt`, or the user's own art) or text rendered from a real font,
 and everything moves through masks. The look comes from the swap-studio **style packs**.

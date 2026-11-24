@@ -1,5 +1,7 @@
 # Hand-drawn finish (frame-by-frame feel) — `motion2d/handdrawn.py`
 
+> Not the whiteboard engine: for pen draw-on reels in `handdrawn/`, read `docs/HANDDRAWN.md`. This doc is the frame-by-frame finish layer for motion2d/cartoon reels.
+
 The finishing layer that makes a motion2d reel read as drawn frame by frame: drawings held on twos, a line
 boil that only changes when the drawing changes, re-inked wobbly outlines, marker/crayon/pencil/chalk fills,
 paper grain, smears on fast moves, an ink draw-on and an onion-skin debug view. Raster only, never SVG.

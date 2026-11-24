@@ -24,7 +24,7 @@ full-frame calls at 1080x1920 stay in the tens of milliseconds after the first o
     truck = wobble_outline(texturize(TRUCK, 'marker', drawing=d % 3), d, width=7)
     fr = PAPER.copy(); paste(fr, boil(truck, d), x, y); out = grain(fr, d)
 
-Playbook: docs/HAND_DRAWN.md. Credit: Swapnil Agrawal (BDS intern).
+Playbook: docs/HANDDRAWN_FINISH.md. Credit: Swapnil Agrawal (BDS intern).
 """
 import math
 from collections import OrderedDict
