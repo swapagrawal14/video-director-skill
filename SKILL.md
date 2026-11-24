@@ -86,6 +86,7 @@ This repo exists so that any agent handed its link can make **any kind of video*
 - **Mix engines.** Render parts with different engines and cut them together with `scripts/mux.py` / ffmpeg (a screencast inside a hand-drawn explainer, a 3D shot inside a reel).
 - **No engine fits? Build one.** Keep only the contracts: picture is a pure function of `t`, VO drives timing, raster only, stills before render, `qa.py` before delivery. Everything else (layout, camera, characters, effects) is yours to write.
 - **Generate assets per video.** Characters, poses, props, backgrounds, stickers, fonts, music and SFX are created for each video's needs (image edits of one base drawing for characters, numpy or code for sound and texture). Shipped assets are a starter kit; reuse them only where they fit.
+- **Frame-by-frame hand-drawn finish:** on twos, per-drawing boil, re-inked wobbly outlines, marker/crayon/chalk fills, paper grain, smears, ink draw-on, onion skin -> `motion2d/handdrawn.py`, read `docs/HAND_DRAWN.md`; demo `examples/truck-sting/`.
 - **Logo intros:** any client logo PNG -> `motion2d/logo_intro.py` auto-splits it into parts (shape, fills, letters, sparkles) and builds an animated intro with tagline + SFX. Read `docs/LOGO_INTRO.md`; example `examples/swap-creations-intro/`.
 - **MCP:** `mcp/server.py` exposes this repo as MCP tools (guide, docs, prompts, screencast stages, episode, scripts, qa). Setup in `mcp/README.md`.
 - **Prompt ideas:** `prompts/README.md` lists the kinds of requests this repo is built for; treat them as a floor.

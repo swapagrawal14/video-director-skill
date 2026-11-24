@@ -53,6 +53,8 @@ Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any a
 <a href="examples/swap-creations-intro/">Source</a> · <a href="docs/LOGO_INTRO.md">How</a> · <code>python3 motion2d/logo_intro.py logo.png out.mp4</code>
 </p>
 
+<p align="center"><img src="docs/img/truck-sting.gif" alt="ZIPZOOM truck sting: hand-drawn finish" width="240"><br><b>ZIPZOOM</b> — hand-drawn truck sting (9:16, 6 s, fully procedural): on twos, line boil, wobbly re-inked outlines, marker fills, paper grain · <a href="examples/truck-sting/">Source</a> · <a href="docs/HAND_DRAWN.md">How</a></p>
+
 <p align="center">
 <img src="docs/img/powercut-cartoon.gif" alt="2 AM Power Cut: pastel cartoon short" width="270"><br>
 <b>2 AM Power Cut</b> — pastel cartoon Short (9:16, 12 s, SFX only)<br>

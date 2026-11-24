@@ -57,6 +57,7 @@ These are written in parallel; use them by these APIs.
 - **`motion2d/loop.py`**: `Beat(bpm)` to put hops and pops on the beat, `cyc(t, L)` for loop-safe phase,
   `export_loop(...)` for seamless loops. Choose `period` (bounce) and `rpm` (wheels/fan) so they complete whole
   cycles in the loop length L (e.g. L = 4 s, period 0.5 s, wheel 60 rpm = 4 turns).
+- **`motion2d/handdrawn.py`**: frame-by-frame finish (on twos, boil per drawing, wobble outline, texture fills, paper grain, smears, draw-on, onion skin); read [HAND_DRAWN.md](HAND_DRAWN.md), demo `examples/truck-sting/`.
 - **`motion.py`**: `paste`, `xform`, `place_pivot`, `back`, `squash`, `ffmpeg_writer(..., fps=24, out_fps=24)`.
 
 ## Pipeline (8 steps)
