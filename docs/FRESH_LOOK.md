@@ -16,6 +16,7 @@ If someone asks for "an ortho appliance tutorial like the braces one", they want
 | Check | Fails when |
 |---|---|
 | (a) look sheet | `project.json` has no `look` block, a field is empty, or any `"CHANGE ME"` is left in `look` / `theme` |
+| (a2) text look | `look.title_motion` / `look.captions_preset` missing or not a preset name from `docs/TEXT_STYLES.md`; `step_style` / `captions_position` not a known value; or the pair equals an example's (braces-tutorial: `card-rise` + `pop-word` or `pill`) without `look.reuse_reason` |
 | (b) default palette | 3+ of `accent #e2475b`, `accent2 #3b82c4`, `bench #c98e5a`, `mat #3e8e93`, `background ["#24557a","#5fa6b8","#f2cfa8"]` are kept (missing keys count, since the template falls back to them), unless `look.reuse_reason` explains why |
 | (c) default set / mascot | `index.html` still contains "Dentu", or the template tooth mascot while scenes use `"mascot"`, or the template wood-grain bench with the bench visible |
 | (d) copied scene | `index.html` is more than 85 % identical (normalised lines) to `examples/braces-tutorial/index.html` or `template/index.html` |
@@ -41,6 +42,10 @@ voice or storyboard. Put it in `project.json` as `look`, and set `theme` from `l
   "captions": "caption, label and step-marker style",
   "camera": "camera language: lens feel, moves, framing habits",
   "signature": "the one visual move this video is remembered for",
+  "title_motion": "mask-wipe",
+  "captions_preset": "lower-third-ticker",
+  "step_style": "counter-dial",
+  "captions_position": "lower-third",
   "reuse_reason": ""
 }
 ```
@@ -51,9 +56,13 @@ voice or storyboard. Put it in `project.json` as `look`, and set `theme` from `l
 | palette | 3-5 hex, one accent, one secondary, one highlight, darks/lights | `#e2475b / #3b82c4 / #ffd23f` | built from the set (steel blue + acrylic pink, lightbox cyan + amber) |
 | hero object | The thing that is built or acts on screen | generic typodont reused | the appliance itself, modelled for this video |
 | character | Guide or none; never the tooth mascot | Dentu | a gloved hand, the user's painted host (`hosts/dentist`), a talking plier, a molar band with eyes, none |
-| typography + captions | Font, title card shape, label and step style | cream cards, red step dot, dark caption pill | stencil labels, chalk, mono readouts, tape strips, lower-third ticker |
+| typography + captions | Font, title motion (`title_motion`), caption preset (`captions_preset`), label and step style (`step_style`); pick by name from [`docs/TEXT_STYLES.md`](TEXT_STYLES.md) | cream card rising + "STEP n / N" chip + dark caption pill (`card-rise` + `chip` + `pill`/`pop-word`) | `draw-on` titles + `chalk-hand` captions, `typewriter` + `typewriter-reveal` readouts, `slide-stack` + `lower-third-ticker`, `tape-strip` steps |
 | camera language | How we look | slow orbit around a mat | macro slides, top-down "recipe" cam, POV from the palate, fixed tripod + inserts |
 | signature move | One memorable visual idea per video | none | each bend glows on a radiograph, screw turns count up like a dial, plates snap like magnets |
+
+`title_motion`, `captions_preset`, `step_style` and `captions_position` are preset NAMES (the other fields are free text):
+`scripts/captions.py --project`, `template/index.html` and `motion2d/textfx.py` read them. Full list with when to use each:
+[`docs/TEXT_STYLES.md`](TEXT_STYLES.md).
 
 The style the user names (hand-drawn, clay, 3D toy...) sits on top of the look sheet: same style can still have a
 different set, palette, character and captions every time.
@@ -79,6 +88,13 @@ palette. Treat each row as a seed: change it to the user's brief, style and audi
 | **Space maintainer (band and loop)** | Kid-friendly paper-cut mouth with layered parallax, bright daylight | `#ffcad4` `#3d5a80` `#98c1d9` `#ee6c4d` | a baby molar and its loop as cut-out paper friends | rounded hand-cut paper letters, speech-bubble captions | side-scrolling parallax pans | the loop "holds the door open" for the permanent tooth to erupt |
 | **Clear aligner** | Bright bathroom-shelf set or a clean product cyclorama, glossy reflections | `#f8f9fa` `#00b4d8` `#023e8a` `#ffb703` | none; product-hero treatment | thin modern sans, feature callouts one word + one line | turntable + macro on attachments | trays stack up in sequence and the smile updates tray by tray |
 | **Bracket bonding** | Operatory chair-side tray of real instruments, cool clinical light, mouth with cheek retractor | `#0d1b2a` `#e0e1dd` `#06d6a0` `#ef476f` | none; gloved hands and instruments act | stencil-style step numbers on the tray, captions as instrument tags | over-the-shoulder operator view, cut to intraoral macro | the curing light's blue glow hardens each bracket with a tick on a progress strip |
+
+Text presets that fit those rows (seeds, change them freely): Hawley `slide-stack` + `minimal-serif` + `tape-strip`;
+Adams clasp `draw-on` + `lower-third-ticker`; labial bow `marker-sweep` + `lower-third-ticker`; Z-spring `draw-on` +
+`chalk-hand`; RPE `typewriter` + `typewriter-reveal` + `counter-dial`; twin block `slam-squash` + `outline-bold`;
+headgear `letter-bounce` + `stacked-bounce`; lingual arch `typewriter` + `typewriter-reveal`; Nance `slow-fade` +
+`minimal-serif`; space maintainer `letter-bounce` + `pop-word`; clear aligner `mask-wipe` + `karaoke-sweep`; bracket
+bonding `marker-sweep` + `marker-highlight` + `tape-strip`.
 
 Before you start, check the project against older videos you or the user have made: if the set, palette, character
 or caption style matches another of her videos, change it.

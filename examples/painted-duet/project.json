@@ -21,6 +21,8 @@
   "type": "Baloo 2, chunky rounded",
   "captions": "burned word captions from words.json, Baloo 2",
   "camera": "slow push, cut to a medium on the punchline",
-  "signature": "chai sip -> namak reaction laugh on the punchline cut"
+  "signature": "chai sip -> namak reaction laugh on the punchline cut",
+  "title_motion": "none",
+  "captions_preset": "pop-word"
  }
 }

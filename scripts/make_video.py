@@ -148,7 +148,7 @@ def preview_times(timing, n=8):
     return sorted(set(ts))
 
 
-LOOK_KEYS = ('set', 'palette', 'character', 'type', 'captions', 'camera', 'signature')
+LOOK_KEYS = ('set', 'palette', 'character', 'type', 'captions', 'camera', 'signature', 'title_motion', 'captions_preset')
 
 
 def project_skeleton(brief):
@@ -285,7 +285,7 @@ Read SKILL.md sections 1-3, docs/INTAKE.md ("After the pick"), docs/STYLES.md (p
 5. Facts: list every value a human must verify in FACTS.md.
 6. Remove the "_todo" key from project.json. No SVG anywhere.
 7. Fill the "look" block in project.json (docs/FRESH_LOOK.md) BEFORE any asset: set, palette (3-5 hex), character, type,
-   captions, camera, signature. Every video gets its own look; examples/ are a quality bar, never a template.
+   captions, camera, signature, title_motion, captions_preset (docs/TEXT_STYLES.md). Every video gets its own look; examples/ are a quality bar, never a template.
    Set "theme" from look.palette. lint.py fails "CHANGE ME", Pixar Clinic default colours and copied sets/mascots.
 """
 
@@ -510,7 +510,9 @@ def st_mux(c):
     if os.path.exists(c.p('words.json')):
         c.sh(py('chapters.py', c.d, c.p('words.json')), check=False)
         if not os.path.exists(c.p('captions.ass')):
-            c.sh(py('captions.py', c.p('words.json'), c.p('captions.ass'), '--w', W, '--h', H, '--style', 'pop'), check=False)
+            lk = P.get('look') if isinstance(P.get('look'), dict) else {}
+            how = ['--project', c.d] if lk.get('captions_preset') else ['--style', 'pop']   # look.captions_preset wins (docs/TEXT_STYLES.md)
+            c.sh(py('captions.py', c.p('words.json'), c.p('captions.ass'), '--w', W, '--h', H, *how), check=False)
     c.sh(py('mux.py', c.d, f'{c.slug}.mp4'))
     return 'done', f'{c.slug}.mp4' + (' (captions burned)' if P.get('burn_captions') else '')
 

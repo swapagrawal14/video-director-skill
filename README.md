@@ -195,7 +195,7 @@ python3 scripts/build_timing.py projects/demo && python3 scripts/lint.py project
 python3 scripts/words_project.py projects/demo                    # words.json for captions
 python3 scripts/shot.py projects/demo 3 9 15 21 27                # preview stills -> shots/sheet.jpg
 python3 scripts/music.py projects/demo calm && python3 scripts/mix.py projects/demo   # -14 LUFS, ducked, 48 kHz
-python3 scripts/captions.py projects/demo/words.json projects/demo/captions.ass --w 1280 --h 720
+python3 scripts/captions.py projects/demo/words.json projects/demo/captions.ass --w 1280 --h 720 --project projects/demo   # look.captions_preset (docs/TEXT_STYLES.md)
 python3 scripts/render_all.py projects/demo --jobs 2
 python3 scripts/chapters.py projects/demo projects/demo/words.json && python3 scripts/mux.py projects/demo Demo.mp4
 python3 scripts/export.py projects/demo/Demo.mp4 shorts projects/demo/Demo_short.mp4

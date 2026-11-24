@@ -13,7 +13,9 @@
   "type": "thin condensed caps, white at 80% opacity, slow fades",
   "captions": "pop style, light grey active / dark grey idle, no yellow",
   "camera": "phone-torch POV, slow creeping push, long holds, sudden cut on the scare",
-  "signature": "bulbs die far to near, 0.85 s vacuum, stinger on the exact frame"
+  "signature": "bulbs die far to near, 0.85 s vacuum, stinger on the exact frame",
+  "title_motion": "slow-fade",
+  "captions_preset": "pop-word"
  },
  "credit": "Swapnil Agrawal (BDS intern)",
  "fps": 24,

@@ -14,7 +14,9 @@ Hinglish tip: write the VO in Devanagari for Hindi voices; keep English terms in
 1. `python3 scripts/words_project.py <dir>` → `words.json` on the final timeline. Uses native TTS timings when present,
    else faster-whisper (CPU int8). Whisper's text is never trusted: if the word count matches the script, the script's
    words are used with Whisper's times. Low-confidence words are listed: check them.
-2. `python3 scripts/captions.py <dir>/words.json <dir>/captions.ass --w 1280 --h 720 --style pop` (or `karaoke`).
+2. `python3 scripts/captions.py <dir>/words.json <dir>/captions.ass --w 1280 --h 720 --project <dir>` (uses `look.captions_preset`,
+   `look.palette`, `look.captions_position`), or `--preset NAME --palette "#..,#..,#.."`. There is no default style: pick
+   one of the presets in `docs/TEXT_STYLES.md` per video. `--style pop|karaoke` still gives the old yellow/white look.
    Vertical: `--w 1080 --h 1920` (keeps captions above the Shorts/Reels UI). `--upper` for punchy reels. `--max-words 3`.
 3. Burn in: set `"burn_captions": "captions.ass"` in project.json before `mux.py`, or pass `--ass` to `export.py`.
 4. Upload-able CC: `python3 scripts/chapters.py <dir> <dir>/words.json` also writes `captions.srt`.

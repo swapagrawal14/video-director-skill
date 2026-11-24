@@ -54,7 +54,13 @@ full render. Looking at stills yourself is not approval.
   camera language, signature move -> `project.json` `"look"`, and `theme` from its palette. Starting looks per ortho
   appliance and the rules: `docs/FRESH_LOOK.md`.
 - Two videos on similar topics (Hawley, Adams clasp, RPE...) must not share a set, palette, character or caption style.
-- `lint.py` fails the build on a missing/placeholder look, the default palette, the default bench/mascot, an
+- **Text has a look too:** pick `look.title_motion` (slam-squash, typewriter, mask-wipe, letter-bounce, slide-stack,
+  marker-sweep, draw-on, slow-fade, card-rise, none), `look.captions_preset` (pop-word, karaoke-sweep,
+  lower-third-ticker, marker-highlight, outline-bold, typewriter-reveal, stacked-bounce, minimal-serif, chalk-hand, pill)
+  and `look.step_style` (chip, counter-dial, tape-strip, none) from `docs/TEXT_STYLES.md`. `captions.py` has no default;
+  the template and `motion2d/textfx.py` read the same names. card-rise + pop-word/pill is the braces example: lint fails it.
+- `lint.py` fails the build on a missing/placeholder look, a missing/unknown title_motion or captions_preset (or the
+  braces example's pair), the default palette, the default bench/mascot, an
   `index.html` >85 % identical to the example or template, or VO copied from the example.
 
 ## Not a slideshow (hard gate, all engines)
@@ -180,7 +186,7 @@ Open the sheet. Check: nothing cut off at edges, labels readable and not overlap
 python3 scripts/music.py projects/<slug> calm     # calm | upbeat | lofi | epic | horror
 python3 scripts/beats.py music.wav beats.json     # optional: + "beat_snap": true, re-run build_timing.py
 python3 scripts/mix.py   projects/<slug>          # VO (30 ms fades) + ducked music + sfx + mute windows -> -14 LUFS / -1 dBTP, 48 kHz
-python3 scripts/captions.py projects/<slug>/words.json projects/<slug>/captions.ass --w 1280 --h 720 --style pop
+python3 scripts/captions.py projects/<slug>/words.json projects/<slug>/captions.ass --w 1280 --h 720 --project projects/<slug>   # look.captions_preset; no default (docs/TEXT_STYLES.md)
 ```
 Music is procedural and royalty-free. Horror: `bash scripts/sfx_horror.sh projects/<slug>/sfx` + the scare structure in `docs/CRAFT.md` §6. Track every external asset in `CREDITS.md` (template: `CREDITS.template.md`).
 

@@ -252,12 +252,19 @@ def decor_layer(W, H, fw, fh, path, title=None, subtitle=None, handle=None, dark
     im.save(path)
 
 
-def captions_file(cap, W, H, tmpd, style='pop'):
-    """words.json -> fresh .ass via scripts/captions.py ; .ass -> retargeted copy ; .srt -> as is."""
+def captions_file(cap, W, H, tmpd, style=None, project=None):
+    """words.json -> fresh .ass via scripts/captions.py ; .ass -> retargeted copy ; .srt -> as is.
+    Caption look: explicit style/preset, else the project's look.captions_preset, else the legacy 'pop'."""
     ext = os.path.splitext(cap)[1].lower()
     if ext == '.json':
         out = os.path.join(tmpd, f'cap_{W}x{H}.ass')
-        subprocess.run([sys.executable, os.path.join(HERE, 'captions.py'), cap, out, '--w', str(W), '--h', str(H), '--style', style], check=True,
+        how = ['--style', style] if style else None
+        if not how and project and os.path.exists(os.path.join(project, 'project.json')):
+            try: lk = json.load(open(os.path.join(project, 'project.json'), encoding='utf-8')).get('look') or {}
+            except Exception: lk = {}
+            if isinstance(lk, dict) and lk.get('captions_preset'): how = ['--project', project]
+        how = how or ['--style', 'pop']
+        subprocess.run([sys.executable, os.path.join(HERE, 'captions.py'), cap, out, '--w', str(W), '--h', str(H), *how], check=True,
                        capture_output=True)
         return out
     if ext == '.ass':
@@ -296,10 +303,11 @@ def main(argv=None):
     ap.add_argument('--crop', default='static', choices=['static', 'track']); ap.add_argument('--samples', type=int, default=32)
     ap.add_argument('--caption-zone', help='a,b fractions of source height to keep inside a crop (burned captions)')
     ap.add_argument('--captions', help='words.json | .ass | .srt to (re-)burn at the new size')
-    ap.add_argument('--caption-style', default='pop'); ap.add_argument('--no-recaption', action='store_true')
+    ap.add_argument('--caption-style', default=None, help="pop | karaoke | a preset (docs/TEXT_STYLES.md); default: project look.captions_preset, else pop"); ap.add_argument('--no-recaption', action='store_true')
     ap.add_argument('--audio', help='separate audio file (default: the source audio)'); ap.add_argument('--crf', type=int, default=18)
     A = ap.parse_args(argv)
     src, audio, cap = A.src, A.audio, A.captions
+    proj_dir = src if os.path.isdir(src) else None
     if os.path.isdir(src):
         d = src; src, pa, clean = project_sources(d); audio = audio or pa
         wj = os.path.join(d, 'words.json')
@@ -364,7 +372,7 @@ def main(argv=None):
                 g = (f'{bg};[0:v]scale={fw}:{fh}:flags=lanczos,setsar=1[fg];[{di}:v]format=rgba[dec];'
                      f'[bg][dec]overlay=0:0:shortest=0[b2];[b2][fg]overlay=(W-w)/2:(H-h)/2:shortest=1[v]')
             if cap:
-                cf = captions_file(cap, W, H, tmpd, A.caption_style)
+                cf = captions_file(cap, W, H, tmpd, A.caption_style, proj_dir)
                 flt = f"ass='{esc_path(cf)}':fontsdir='{esc_path(FONTS)}'" if cf.endswith('.ass') else f"subtitles='{esc_path(cf)}':fontsdir='{esc_path(FONTS)}'"
                 g = g[:-3] + f'[v0];[v0]{flt}[v]'
             dst = os.path.join(outdir, f'{stem}_{asp}.mp4')

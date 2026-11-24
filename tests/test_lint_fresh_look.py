@@ -16,6 +16,8 @@ FRESH_LOOK = {
     "captions": "white text on a thin cyan underline, bottom left",
     "camera": "macro slides along the wire, rack focus between steps",
     "signature": "each bend lights up on the radiograph as it is made",
+    "title_motion": "mask-wipe",
+    "captions_preset": "lower-third-ticker",
 }
 FRESH_THEME = {"accent": "#ff8a3d", "accent2": "#7fd1ff", "highlight": "#f4f1ea",
                "background": ["#0e1621", "#15253a", "#223a55"], "bench": "#2a3442", "mat": "#0e1621"}

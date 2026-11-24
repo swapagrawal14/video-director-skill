@@ -6,7 +6,9 @@ subtitle chunk length (<=90 chars), dead air (scene with no VO and no 'secs'/'sh
 genre-specific bans from docs/STYLES.md (e.g. horror without silence-before-stinger, promo without CTA), no SVG.
 Anti-clone checks (docs/FRESH_LOOK.md; every video gets its own look, examples are a quality bar, never a template):
   (a) project.json needs a filled "look" block {set, palette[3-5 hex], character, type, captions, camera, signature,
-      reuse_reason?}; any "CHANGE ME" left in "look" or "theme" is an ERROR.
+      title_motion, captions_preset, step_style?, captions_position?, reuse_reason?}; any "CHANGE ME" left in "look"
+      or "theme" is an ERROR. title_motion / captions_preset must be preset names from docs/TEXT_STYLES.md, and the
+      pair must not equal an example's (braces-tutorial = card-rise + pop-word/pill): ERROR, or WARN with reuse_reason.
   (b) theme equal to the Pixar Clinic / template defaults (3+ of accent, accent2, bench, mat, background) is an ERROR
       unless look.reuse_reason is a non-empty string.
   (c) index.html still has the default tooth mascot ("Dentu" or the template's mascot block) while scenes use
@@ -80,6 +82,39 @@ else:
     if pal not in (None, '', []) and 'change me' not in json.dumps(pal).lower() and (not isinstance(pal, list) or not all(isinstance(c, str) and re.fullmatch(r'#[0-9a-fA-F]{6}', c) for c in pal)
                                       or not 3 <= len(pal) <= 5):
         E.append('look.palette must be a list of 3-5 hex colours like "#1a2b3c"')
+# (a2) text look: title motion + caption preset picked by name, and not the same pair as an example (docs/TEXT_STYLES.md)
+sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+from text_presets import CAPTION_PRESETS, TITLE_MOTIONS, STEP_STYLES, CAPTION_POSITIONS, EXAMPLE_LOOKS, norm as _tn
+if isinstance(LOOK, dict):
+    _txt = {}
+    for k, allowed in (('title_motion', TITLE_MOTIONS), ('captions_preset', CAPTION_PRESETS)):
+        v = LOOK.get(k)
+        if v in (None, '', []):
+            E.append(f'look.{k} is missing; pick one of {", ".join(allowed)} for this video (docs/TEXT_STYLES.md)')
+        elif 'change me' in str(v).lower(): pass   # reported by the CHANGE ME check below
+        elif _tn(v) not in allowed:
+            E.append(f'look.{k} "{v}" is not a known preset; use one of {", ".join(allowed)} (docs/TEXT_STYLES.md)')
+        else: _txt[k] = _tn(v)
+    for k, allowed in (('step_style', STEP_STYLES), ('captions_position', CAPTION_POSITIONS)):
+        v = LOOK.get(k)
+        if v not in (None, '') and 'change me' not in str(v).lower() and _tn(v) not in allowed:
+            E.append(f'look.{k} "{v}" is not one of {", ".join(allowed)} (docs/TEXT_STYLES.md)')
+    if len(_txt) == 2:
+        _ex = dict(EXAMPLE_LOOKS)
+        for _pj in sorted(__import__('glob').glob(os.path.join(ROOT, 'examples', '*', 'project.json'))):
+            if os.path.abspath(os.path.dirname(_pj)) == os.path.abspath(d): continue   # linting the example itself
+            try: _el = json.load(open(_pj, encoding='utf-8')).get('look') or {}
+            except Exception: continue
+            if isinstance(_el, dict) and _el.get('title_motion') and _el.get('captions_preset'):
+                _ex[os.path.basename(os.path.dirname(_pj))] = {'title_motion': _el['title_motion'], 'captions_preset': [_el['captions_preset']]}
+        for _name, _el in _ex.items():
+            _cps = [_tn(x) for x in (_el['captions_preset'] if isinstance(_el['captions_preset'], list) else [_el['captions_preset']])]
+            if _txt['title_motion'] == _tn(_el['title_motion']) and _txt['captions_preset'] in _cps:
+                _msg = (f'text look clones examples/{_name}: title_motion "{_txt["title_motion"]}" + captions_preset '
+                        f'"{_txt["captions_preset"]}" are exactly what it uses')
+                if REUSE: W.append(_msg + '; allowed by look.reuse_reason')
+                else: E.append(_msg + '; pick a different title motion or caption preset (docs/TEXT_STYLES.md), or give look.reuse_reason')
+                break
 if 'change me' in json.dumps(P.get('look', {}), ensure_ascii=False).lower() or 'change me' in json.dumps(P.get('theme', {}), ensure_ascii=False).lower():
     E.append('look/theme still contain "CHANGE ME" placeholders; ' + FRESH)
 # (b) theme equal to the Pixar Clinic / template defaults
