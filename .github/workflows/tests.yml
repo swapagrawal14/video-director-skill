@@ -14,6 +14,6 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-          python -m pip install -q pytest pillow numpy opencv-python-headless
+          python -m pip install -q pytest pillow numpy scipy opencv-python-headless
       - name: Test
         run: python -m pytest -q tests
