@@ -9,7 +9,7 @@ description: Direct and produce outstanding, fully finished videos on ANY topic 
 > 1. `bash scripts/setup.sh` once (must end with "Setup done.").
 > 2. Ask the brief: topic, format (9:16 / 16:9), language + voice, credit line.
 > 3. Offer 3 treatments (`docs/INTAKE.md`), mark your pick, wait for a choice.
-> 4. Pick the engine (see *Choosing an engine*) and one recipe (`docs/STYLES.md`), then write the look sheet (`docs/FRESH_LOOK.md`).
+> 4. Pick the engine (image frames + pose packs first, three.js only if asked: *Routing priority*) and one recipe (`docs/STYLES.md`), then write the look sheet (`docs/FRESH_LOOK.md`).
 > 5. Script -> VO (`tts_free.py` or `tts_cartesia.py`) -> `build_timing.py` -> `lint.py`.
 > 6. Build the scenes; objects act on every VO line. Raster only, never SVG.
 > 7. Storyboard stills (`shot.py`) -> user says yes -> full render (`render_all.py`).
@@ -47,6 +47,26 @@ your pick marked. If the user named a style, all 3 use that style. Example for a
 Then show a **storyboard sheet** (one still per scene, `shot.py` / `PREVIEW=`) to the user and get a yes before the
 full render. Looking at stills yourself is not approval.
 
+## Routing priority: image frames first, three.js last (read before choosing anything)
+**A "3D look" is an art style, not an engine.** Zack D. Films glossy toy-3D, Pixar-ish, claymation, anime, crayon,
+MS Paint, paper cut-out, desi gouache: every one of these is made the SAME way by default:
+1. **Generate image frames in that style** with an image model (style reference as the first input).
+2. **Characters act through pose packs:** master pose, then 3-10 key poses as image edits of the master (same
+   face, same framing, same canvas) - talk, point, explain, thumbs-up, wave, react, walk A/B. Hard-cut or
+   in-between them on VO beats, with squash on each cut, breath, sway, bob (`motion2d/posepack.py`,
+   vid-shark, rigpop-motion). Walks and gestures are flip-books of drawn keys, never a still sliding around.
+3. **Objects act as separate cut-outs:** generate each prop on #00FF00 (or a keyable flat background), then fly,
+   drop, pivot, remove and insert them in code (a tumour segment lifts out, an implant drops in and clicks).
+   State changes are image edits of the same plate (bone with gap -> bone with implant), cross-cut on the action.
+4. Camera push/drift, parallax between plate and cut-outs, glows, labels, SFX on every action.
+
+Order of preference: **(1) image frames + pose packs + cut-outs (motion2d / vid-shark / rigpop)**,
+(2) other raster engines (handdrawn, screencast, vidliboom), (3) paid AI video models (zack-d workflow, Kling;
+ask first, they cost credits), (4) **three.js `template/` only when the person explicitly asks for real 3D
+models / three.js, or no image generator is available.** A Zack D or "3D style" reference never means three.js.
+If unsure, ask one line: "Image frames in this style (default) ya real three.js 3D?"
+Worked example: `examples/limb-salvage-zackd/` (9:16 Hinglish patient-education reel, Zack D look, pose packs).
+
 ## Fresh look every video (anti-clone, hard gate, all engines)
 - **Examples are a quality bar, never a template.** Match `examples/braces-tutorial`'s polish, never its wooden bench,
   "Dentu" tooth mascot, Pixar Clinic colours, title card, step chips or caption pill. Same for the `template/` defaults.
@@ -82,7 +102,7 @@ full render. Looking at stills yourself is not approval.
 ## Unbounded by design
 **This repo is the hub of the author's whole video toolkit.** `docs/ENGINES.md` (and `engines.json`) maps every treatment to the best engine across her repos (vid-shark, vid-liboom, the Rigpop family, swap-studio, clipcast, rangmanch-ar, rigpop-ink, AI-video workflows…). Fetch any of them with `scripts/fetch_engine.sh <name>`; this repo still owns intake, VO, timing, mix, QA and delivery.
 This repo exists so that any agent handed its link can make **any kind of video**. The engines, templates, packs and examples are starting points, never the edge of what is allowed.
-- **Route, then stretch.** Pick the closest engine (see *Choosing an engine*): 3D explainer or procedure -> `template/`; object motion graphics -> `motion2d/`; whiteboard or hand-drawn -> `handdrawn/`; app or website tutorial -> `screencast/`; dialogue cartoon -> `vidliboom/`. Then change whatever the video needs.
+- **Route, then stretch.** Pick the closest engine (see *Routing priority* and *Choosing an engine*): any art style incl. 3D-look, characters and procedures -> image frames + pose packs + cut-outs (`motion2d/`); real three.js 3D only on request -> `template/`; whiteboard or hand-drawn -> `handdrawn/`; app or website tutorial -> `screencast/`; dialogue cartoon -> `vidliboom/`. Then change whatever the video needs.
 - **Mix engines.** Render parts with different engines and cut them together with `scripts/mux.py` / ffmpeg (a screencast inside a hand-drawn explainer, a 3D shot inside a reel).
 - **No engine fits? Build one.** Keep only the contracts: picture is a pure function of `t`, VO drives timing, raster only, stills before render, `qa.py` before delivery. Everything else (layout, camera, characters, effects) is yours to write.
 - **Generate assets per video.** Characters, poses, props, backgrounds, stickers, fonts, music and SFX are created for each video's needs (image edits of one base drawing for characters, numpy or code for sound and texture). Shipped assets are a starter kit; reuse them only where they fit.
@@ -227,8 +247,8 @@ python3 scripts/qa.py Graded.mp4 projects/<slug>/captions.ass                   
 
 
 ## Choosing an engine
-Full routing table across all her repos: `docs/ENGINES.md`. Built in:
-- three.js engine (`template/`): narrated explainers, horror shorts, painted characters with `headrig3d.js`.
+Full routing table across all her repos: `docs/ENGINES.md`. Default is image frames + pose packs (see *Routing priority*). Built in:
+- three.js engine (`template/`): ONLY when real 3D / three.js is asked for (or no image model exists). Not for a "3D look".
 - `motion2d/`: object-action motion graphics in ANY raster style (claymation, desi illustration, paper cut-out, 3D toy, ink-and-marker hand-drawn). DEFAULT for tutorials and procedures in a 2D look, including "hand-drawn" ones: objects act, pose-pack characters, SFX. Read docs/MOTION2D.md. For flat motion-doodle reels (logo stings, line-art loops, pastel cel cartoons, no VO, beat-synced) use the doodle preset: `motion2d/doodle.py`, `warp.py` (puppet pins), `inbetween.py` (smooth pose changes), `loop.py` (music-loop mode); read docs/MOTION_DOODLE.md. For cartoon scenes and episodes in ANY art style (style packs or a style read from the user's reference, beat-sheet acting, lighting gags, glow eyes, prop rigs, tiny-planet/parallax worlds) use the cartoon kit `motion2d/cartoon.py`; read docs/CARTOON.md and docs/ARTSTYLES.md.
 - `handdrawn/`: whiteboard / pen draw-on reels, only when the user picks a whiteboard treatment or for short concept overviews in swap-studio style packs (pen draw-on, boil, write-on, marker swipe, karaoke, end card), plus a talking painted host (`handdrawn/examples/talking-explainer/`, diff-patch face rig). Read docs/HANDDRAWN.md.
 - `screencast/`: tutorial reels (desktop browser; phone recording via `"device": "mobile"` is experimental) with a real browser recording on a tilted card plus a gesturing painted host (`python3 -m screencast all <proj>`). Read docs/SCREENCAST.md. Its assets are a starter kit: generate new characters, poses, props, stickers, backgrounds and sounds for each video as it needs them (raster only). Add procedural SFX with `python3 -m screencast sfx <proj>`, and blur anything personal in a capture with `"blur"`.

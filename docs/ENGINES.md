@@ -67,7 +67,7 @@ logos-timeline-video-agent and video-makers-system-prompts (prompt packs for oth
 | real footage, stylised | rigpop-ink | |
 | user acting it out | rangmanch-ar | doodle-mirror |
 | claymation with video AI | claymation-style-videos | vid-shark clay (code only, free) |
-| Zack D. style 3D short | zack-d workflow | template/ |
+| Zack D. style 3D-look short | image frames + pose packs + cut-outs (`motion2d/`, `examples/limb-salvage-zackd/`) | zack-d workflow (paid clips); template/ only if real 3D is asked |
 | horror short | template/ horror recipe | rigpop-ink pulp-horror on footage |
 
 Rules that hold in every engine: raster art only (no SVG, even where an engine supports it), the user's own

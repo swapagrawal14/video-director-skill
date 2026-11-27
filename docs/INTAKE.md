@@ -1,6 +1,6 @@
 # Intake: treatments to offer
 
-Offer 3 of these (engines for each: `docs/ENGINES.md`) (the ones that fit the topic), one line each, your pick marked, before generating any asset.
+Default every treatment to image frames in the requested style + pose packs + cut-outs (SKILL.md, *Routing priority*); never offer three.js first for a 3D-look request. Offer 3 of these (engines for each: `docs/ENGINES.md`) (the ones that fit the topic), one line each, your pick marked, before generating any asset.
 A style (hand-drawn, clay, paper, 3D toy, 3D) can be paired with almost any treatment; keep the user's style.
 
 | # | Treatment | What happens on screen | Engine | Best for |
@@ -8,7 +8,7 @@ A style (hand-drawn, clay, paper, 3D toy, 3D) can be paired with almost any trea
 | 1 | **Bench demo** | The work piece stays on screen; tools travel in, act on it step by step; close-ups at each step; result builds up | `motion2d/` (2D) or `template/` (3D) | procedures, lab work, wire bending, recipes, DIY |
 | 2 | **Host-led explainer** | The host (pose pack) talks, points, holds props; objects pop in and act beside them | `motion2d/` posepack or `screencast/` host | concepts with a personal face, reels |
 | 3 | **Object story** | No host; objects perform the whole idea like stop-motion (vid-shark style) | `motion2d/` | short reels, 15–40 s, ads, fun facts |
-| 4 | **3D procedure** | Lit 3D models, camera orbits, cross-sections, tool paths | `template/` | anatomy, mechanisms, clinical steps in 3D |
+| 4 | **3D procedure** | Real three.js models, camera orbits, cross-sections, tool paths | `template/` | ONLY when real 3D is asked; a 3D *look* is option 1-3 with 3D-style image frames |
 | 5 | **Whiteboard overview** | Pen draws diagrams, write-on labels, marker swipes | `handdrawn/` | theory overviews, revision notes; never the default for a procedure |
 | 6 | **Screencast tutorial** | Real browser recording on a tilted card + gesturing host | `screencast/` | apps, websites, software |
 | 7 | **Dialogue cartoon** | Characters talk scene to scene from a script | `vidliboom/` | stories, skits, patient-education dialogues |
