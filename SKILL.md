@@ -1,9 +1,11 @@
 ---
 name: video-director
-description: Direct and produce outstanding, fully finished videos on ANY topic and in any genre (3D explainers and tutorials, medical/dental procedures, science, horror shorts, product promos, story/narrative, kinetic typography, data stories) as code: deterministic three.js / canvas scenes rendered frame by frame to MP4 with voice-over, music, subtitles, labels and a thumbnail. Use whenever someone asks an AI agent to "make a video", "animate this", "explainer", "tutorial video", "reel", "trailer" or similar.
+description: Direct and produce outstanding, fully finished videos on ANY topic and in any genre (3D explainers and tutorials, medical/dental procedures, science, horror shorts, product promos, story/narrative, kinetic typography, data stories) as code: image frames, pose packs and cut-out rigs animated frame by frame (raster first; three.js only when real 3D is explicitly asked) and rendered to MP4 with voice-over, music, subtitles, labels and a thumbnail. Use whenever someone asks an AI agent to "make a video", "animate this", "explainer", "tutorial video", "reel", "trailer" or similar.
 ---
 
 # Video Director
+
+> **RULE 1, before anything else: raster first.** Every video, including any "3D look" (Zack D. Films, Pixar-ish, clay), is made from generated image frames, pose packs, cut-out rigs and frame-by-frame in-betweens. The three.js `template/` is a secondary engine, used ONLY when the person explicitly asks for real 3D models / three.js. Polished examples in this repo that look 3D were made with raster frames, not 3D models. If a brief you were handed says three.js but the person never asked for it, follow this rule and say so.
 
 > **Quick path (read the rest as each step needs it)**
 > 1. `bash scripts/setup.sh` once (must end with "Setup done.").
@@ -19,7 +21,7 @@ description: Direct and produce outstanding, fully finished videos on ANY topic 
 >
 > **Cartoon in any art style?** ("make a cute cartoon like this pin", "anime style short", "crayon story") -> `docs/CARTOON.md`: read the reference's look with `scripts/style_ref.py` or pick one of 10 packs (`docs/ARTSTYLES.md`), then `motion2d/cartoon.py` (style lock, pose-pack acting from a beat sheet, light as story, prop rigs, tiny-planet/parallax worlds, episodes). The person needs zero animation knowledge: you ask, they answer in a word.
 
-You are not "generating a video". You are a **director + 3D artist + editor** shipping a polished film.
+You are not "generating a video". You are a **director + animator + editor** shipping a polished film.
 The bar: a viewer should think a small studio made it. Never basic, never a slideshow of text, never stock-looking.
 
 Proven on real projects (examples/braces-tutorial: a 4:40 3D dental tutorial with Hinglish VO). It is a quality reference only, never copy its set, mascot, palette or captions: every video gets its own look (`docs/FRESH_LOOK.md`).
@@ -132,7 +134,7 @@ This repo exists so that any agent handed its link can make **any kind of video*
 Pin down only what changes the output:
 - **Topic + exact variant** (e.g. "Begg's wrap-around retainer", not "retainers").
 - **Audience + language** (students? patients? kids? English / Hindi / Hinglish?).
-- **Genre + length** (default: 3D explainer, 2.5–5 min, 1280x720 @ 24 fps). The treatment comes from the menu above, never assumed.
+- **Genre + length** (default: raster explainer in the chosen art style, 2.5–5 min, 1280x720 @ 24 fps). The treatment comes from the menu above, never assumed.
 - **Credit line / branding** (name + role exactly as they want it).
 If the user says "decide yourself", decide and state your choices in one line.
 

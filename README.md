@@ -15,6 +15,8 @@
 ![Audio](https://img.shields.io/badge/audio--14%20LUFS-broadcast%20ready-ffd23f)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
+> **Agents: raster first.** Everything here, even the shots that look 3D, is built from generated image frames, pose packs, cut-out rigs and frame-by-frame animation. Use the three.js engine only when someone explicitly asks for real 3D models. See the Routing priority in [SKILL.md](SKILL.md).
+
 Works with **Claude Code · Codex · Cursor · Gemini CLI · Hark** — or any agent that can run a shell.
 
 </div>
@@ -126,7 +128,7 @@ Docs: [docs/SCREENCAST.md](docs/SCREENCAST.md) · [docs/HANDDRAWN.md](docs/HANDD
 
 | | |
 |---|---|
-| 🎥 **Real 3D, frame-perfect** | A deterministic three.js engine renders every frame from `t`. `timeshim.js` makes even custom GSAP/CSS/particle scenes render without dropped frames. |
+| 🎥 **Frame-perfect rendering** | Every engine renders each frame as a pure function of `t` (raster engines by default, three.js only on request). `timeshim.js` makes even custom GSAP/CSS/particle scenes render without dropped frames. |
 | 🗣️ **Free voices that sound right** | Edge → Kokoro → Piper chain with Hindi, Hinglish and English voices and native word timings. Cartesia for premium/cloned voices. |
 | 💬 **Captions people actually read** | Word-by-word TikTok-pop or karaoke captions, safe-zone aware for Shorts/Reels, plus SRT. |
 | 🔊 **Sound that hits** | Ducking, anti-click fades, SFX bus, silence windows before scares, two-pass loudness to **-14 LUFS / -1.5 dBTP**. |
