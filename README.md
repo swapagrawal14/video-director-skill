@@ -77,7 +77,7 @@ Open [`prompts/`](prompts/README.md) for ready-to-use prompts: tutorials, explai
 
 ## 🎭 Painted characters that act (new)
 
-`template/headrig3d.js` (default) and `template/posepack3d.js` bring the [Rigpop Motion](https://github.com/swapagrawal14/rigpop-motion) method into the three.js engine: **pose first, motion second**.
+`template/headrig3d.js` and `template/posepack3d.js` (three.js engine, only when real 3D is asked for; the raster pose-pack route in `motion2d/` is the default) bring the [Rigpop Motion](https://github.com/swapagrawal14/rigpop-motion) method into the three.js engine: **pose first, motion second**.
 
 - Characters are **painted cutout rigs** (PNG): headless painted body poses + ONE shared painted head, so expressions never change by themselves. Never vector or primitive dolls.
 - **Directed expressions:** brows, eyes, mouth and head tilt are keyed in time; lip-sync visemes are smoothed and held ≥ 3 frames
@@ -131,7 +131,7 @@ Docs: [docs/SCREENCAST.md](docs/SCREENCAST.md) · [docs/HANDDRAWN.md](docs/HANDD
 | 🎥 **Frame-perfect rendering** | Every engine renders each frame as a pure function of `t` (raster engines by default, three.js only on request). `timeshim.js` makes even custom GSAP/CSS/particle scenes render without dropped frames. |
 | 🗣️ **Free voices that sound right** | Edge → Kokoro → Piper chain with Hindi, Hinglish and English voices and native word timings. Cartesia for premium/cloned voices. |
 | 💬 **Captions people actually read** | Word-by-word TikTok-pop or karaoke captions, safe-zone aware for Shorts/Reels, plus SRT. |
-| 🔊 **Sound that hits** | Ducking, anti-click fades, SFX bus, silence windows before scares, two-pass loudness to **-14 LUFS / -1.5 dBTP**. |
+| 🔊 **Sound that hits** | Ducking, anti-click fades, SFX bus, silence windows before scares, two-pass loudness to **-14 LUFS / -3 dBTP** (headroom so it stays clean after AAC). |
 | 👻 **A horror toolkit** | Procedural drones, heartbeats, risers and stingers, plus a scare-structure guide (hook, false calm, vacuum, hit). |
 | 🎨 **Film look** | Generated LUTs (horror, teal-orange, warm, bleach), grain, vignette, chromatic aberration, letterbox. |
 | 📱 **Every platform** | YouTube 16:9, Shorts/Reels 9:16 (native, crop or blur-fill), square, 4:5. |
@@ -144,7 +144,7 @@ Docs: [docs/SCREENCAST.md](docs/SCREENCAST.md) · [docs/HANDDRAWN.md](docs/HANDD
 
 | Recipe | Feels like | Best for |
 |---|---|---|
-| 🦷 **Pixar Clinic** | Soft, glossy 3D models, numbered steps, callout labels | Tutorials, dental/medical procedures |
+| 🦷 **Pixar Clinic** | Soft, glossy 3D-look art (image frames, not 3D models), numbered steps, callout labels | Tutorials, dental/medical procedures |
 | 📐 **Blueprint Tech** | Wireframes, glowing lines, exploded views | Engineering, software, systems |
 | 👻 **Cinematic Horror** | Dark practicals, flicker, slow dread, one earned scare | Horror shorts, creepy stories |
 | ✨ **Product Hero** | Studio lighting, hero turntables, cuts on the beat | Launches, promos, app demos |
@@ -163,7 +163,7 @@ flowchart LR
   A[Brief] --> B[Recipe + script<br>project.json]
   B --> C[Voice-over<br>+ word timings]
   C --> D[timing.json]
-  D --> E[3D scene<br>index.html]
+  D --> E[Image frames + rigs<br>pose packs, cut-outs]
   E --> F[Lint + preview stills]
   F --> G[Chunked parallel render]
   C --> H[Music + SFX mix<br>-14 LUFS]
@@ -193,7 +193,7 @@ Read **[SKILL.md](SKILL.md)** first and follow it end to end. Then:
 ```bash
 git clone https://github.com/swapagrawal14/video-director-skill && cd video-director-skill
 bash scripts/setup.sh                         # three.js, fonts, playwright + chromium (needs ffmpeg, node, python3)
-bash scripts/new_project.sh projects/demo     # copies the template (working 5-scene demo)
+bash scripts/new_project.sh projects/demo     # copies the three.js template demo (a smoke test; real videos default to raster engines, see SKILL.md)
 python3 scripts/tts_free.py projects/demo --engine edge          # free Hindi/English VO with word timings
 python3 scripts/build_timing.py projects/demo && python3 scripts/lint.py projects/demo
 python3 scripts/words_project.py projects/demo                    # words.json for captions

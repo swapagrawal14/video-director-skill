@@ -1,5 +1,5 @@
 """Mix VO (placed at each scene's VO start) + ducked music + SFX -> final_audio.wav (48 kHz stereo, two-pass loudness).
-Targets: YouTube/Shorts/Reels -14 LUFS, true peak -1 dBTP (project.json "lufs": -14). Podcasts: -16.
+Targets: YouTube/Shorts/Reels -14 LUFS, true peak -3 dBTP (headroom: AAC/Opus transcode adds ~1-2 dB of peaks; -1.5 failed qa.py after encode) (project.json "lufs": -14). Podcasts: -16.
 SFX: project.json "sfx": [{"file":"sfx/stinger.wav","at":12.3,"gain":0.8}]  ("scene": k + "at" = seconds into scene k also works)
 Silence-before-scare: "mute": [{"from":41.2,"to":42.0}] mutes music (not VO/SFX) in that window, for horror hits.
 Every VO clip gets 30 ms fades so cuts never click. Usage: python3 scripts/mix.py <project-dir>"""
@@ -29,5 +29,5 @@ fl.append(f"{''.join(bus)}amix=inputs={len(bus)}:normalize=0,alimiter=limit=0.95
 pre = os.path.join(tempfile.gettempdir(), 'mix_pre.wav'); outp = os.path.join(tempfile.gettempdir(), 'mix_out.wav')
 cmd = ['ffmpeg', '-y', '-loglevel', 'error'] + sum([['-i', f] for f in ins], []) + ['-filter_complex', ';'.join(fl), '-map', '[out]', '-ar', '48000', '-ac', '2', '-t', str(D), pre]
 subprocess.run(cmd, check=True)
-subprocess.run([sys.executable, os.path.join(here, 'loudnorm.py'), pre, outp, str(lufs), str(P.get('true_peak', -1.5))], check=True, stdout=subprocess.DEVNULL)
-shutil.copy(outp, os.path.join(d, 'final_audio.wav')); print(f'final_audio.wav {D}s, {lufs} LUFS / {P.get("true_peak", -1.5)} dBTP, 48 kHz')
+subprocess.run([sys.executable, os.path.join(here, 'loudnorm.py'), pre, outp, str(lufs), str(P.get('true_peak', -3.0))], check=True, stdout=subprocess.DEVNULL)
+shutil.copy(outp, os.path.join(d, 'final_audio.wav')); print(f'final_audio.wav {D}s, {lufs} LUFS / {P.get("true_peak", -3.0)} dBTP, 48 kHz')
